@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Lgram Web Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --main-bg: #f8fafc;
+            --container-bg: #fff;
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --border: #e5e7eb;
+            --text: #222;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --main-bg: #18181b;
+                --container-bg: #23272f;
+                --primary: #60a5fa;
+                --primary-dark: #2563eb;
+                --border: #333;
+                --text: #f3f4f6;
+            }
+        }
+        body {
+            background: var(--main-bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .chat-layout {
+            display: flex;
+            min-height: 100vh;
+            max-width: 1100px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px 0 #0001;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .chat-sidebar {
+            background: var(--main-bg);
+            min-width: 220px;
+            max-width: 260px;
+            padding: 28px 16px 16px 16px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .chat-sidebar h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            color: var(--primary-dark);
+        }
+        #historyBox {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--container-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            padding: 10px 8px;
+            min-height: 120px;
+            max-height: 420px;
+        }
+        #historyBox ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #historyBox li {
+            margin-bottom: 10px;
+            font-size: 0.98em;
+            color: #334155;
+            cursor: pointer;
+            padding: 4px 0 4px 0;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background 0.15s;
+        }
+        #historyBox li:hover {
+            background: #f1f5f9;
+        }
+        .empty-history {
+            color: #888;
+            font-size: 0.97em;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .chat-main {
+            flex: 1 1 0%;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 0 0 0 0;
+        }
+        .chat-header {
+            padding: 32px 32px 0 32px;
+        }
+        .chat-header h1 {
+            margin: 0 0 8px 0;
+            font-size: 2em;
+            color: var(--primary);
+        }
+        .chat-header .desc {
+            color: #64748b;
+            font-size: 1.08em;
+            margin-bottom: 8px;
+        }
+        .chat-header .example {
+            font-size: 0.98em;
+            color: #64748b;
+            background: #f1f5f9;
+            border-radius: 6px;
+            padding: 2px 8px;
+            margin-left: 8px;
+        }
+        .chat-messages {
+            flex: 1 1 0%;
+            padding: 24px 32px 16px 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: var(--main-bg);
+        }
+        .msg-row {
+            display: flex;
+            margin-bottom: 2px;
+        }
+        .msg-row.user {
+            justify-content: flex-end;
+        }
+        .msg-row.ai {
+            justify-content: flex-start;
+        }
+        .msg-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 1.08em;
+            line-height: 1.5;
+            box-shadow: 0 2px 8px #0001;
+            position: relative;
+            word-break: break-word;
+        }
+        .user-bubble {
+            background: var(--primary);
+            color: #fff;
+            border-bottom-right-radius: 6px;
+        }
+        .ai-bubble {
+            background: #f1f5f9;
+            color: #222;
+            border-bottom-left-radius: 6px;
+            margin-left: 0;
+        }
+        .copy-btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.95em;
+            cursor: pointer;
+            margin-left: 10px;
+            margin-top: 8px;
+        }
+        .chat-input-form {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            padding: 18px 32px 24px 32px;
+            background: var(--container-bg);
+            border-top: 1px solid var(--border);
+        }
+        .chat-input-form textarea {
+            flex: 1 1 0%;
+            min-height: 48px;
+            max-height: 120px;
+            font-size: 1.1rem;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            resize: vertical;
+            background: var(--main-bg);
+            color: var(--text);
+        }
+        .chat-input-form button[type="submit"] {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .chat-input-form button[type="submit"]:hover {
+            background: var(--primary-dark);
+        }
+        .spinner {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            border: 4px solid #cbd5e1;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 900px) {
+            .chat-layout { flex-direction: column; }
+            .chat-sidebar { max-width: 100vw; min-width: 0; border-right: none; border-bottom: 1px solid var(--border); }
+            .chat-main { min-height: 0; }
+        }
+        @media (max-width: 600px) {
+            .chat-header, .chat-messages, .chat-input-form { padding-left: 8px; padding-right: 8px; }
+            .chat-layout { border-radius: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="chat-layout">
+    <aside class="chat-sidebar">
+        <h3>Geçmişiniz</h3>
+        <div id="historyBox">
+            {% if history and history|length > 0 %}
+                <ul>
+                {% for item in history reversed %}
+                    <li onclick="setInput('{{ item.input_text|escapejs }}')">
+                        <span class="msg-user">🧑</span> {{ item.input_text|truncatechars:40 }}
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-history">Henüz geçmiş yok.</div>
+            {% endif %}
+        </div>
+    </aside>
+    <main class="chat-main">
+        <div class="chat-header">
+            <h1>Lgram Web Chat</h1>
+            <div class="desc">Yapay zeka destekli metin üretimi ve düzeltme. <span class="example">Örnek: <em>This was precisely what had formed the subject of my reflections.</em></span></div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            {% for item in history reversed %}
+                <div class="msg-row user">
+                    <div class="msg-bubble user-bubble">{{ item.input_text }}</div>
+                </div>
+                <div class="msg-row ai">
+                    <div class="msg-bubble ai-bubble">{{ item.generated_text }}
+                        <button class="copy-btn" onclick="copyToClipboard(this, '{{ item.generated_text|escapejs }}')">Kopyala</button>
+                    </div>
+                </div>
+            {% endfor %}
+            {% if result %}
+                <div class="msg-row user">
+                    <div class="msg-bubble user-bubble">{{ request.POST.input_text }}</div>
+                </div>
+                <div class="msg-row ai">
+                    <div class="msg-bubble ai-bubble">{{ result }}
+                        <button class="copy-btn" onclick="copyToClipboard(this, '{{ result|escapejs }}')">Kopyala</button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <form class="chat-input-form" method="post" onsubmit="return showLoadingAndValidate();">
+            {% csrf_token %}
+            <textarea name="input_text" id="input_text" maxlength="300" oninput="updateCharCount()" placeholder="Bir cümle girin...">{{ request.POST.input_text }}</textarea>
+            <div class="char-count" id="charCount">0 karakter</div>
+            <button type="submit" id="submitBtn">Gönder</button>
+            <div id="loadingSpinner" style="display:none; margin-left:12px;">
+                <div class="spinner"></div>
+                <span style="font-size:0.98em; color:#64748b; margin-left:8px;">Metin üretiliyor...</span>
+            </div>
+        </form>
+    </main>
+</div>
+<script>
+function updateCharCount() {
+    var textarea = document.getElementById('input_text');
+    var count = textarea.value.length;
+    document.getElementById('charCount').innerText = count + ' karakter';
+}
+function showLoadingAndValidate() {
+    var val = document.getElementById('input_text').value.trim();
+    if (!val) {
+        alert('Lütfen bir cümle girin.');
+        return false;
+    }
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('loadingSpinner').style.display = 'block';
+    return true;
+}
+function setInput(val) {
+    document.getElementById('input_text').value = val;
+    updateCharCount();
+    document.getElementById('input_text').focus();
+}
+function copyToClipboard(btn, text) {
+    navigator.clipboard.writeText(text);
+    btn.innerText = 'Kopyalandı!';
+    setTimeout(function(){ btn.innerText = 'Kopyala'; }, 1200);
+}
+window.onload = function() {
+    updateCharCount();
+    var chat = document.getElementById('chatMessages');
+    if(chat) chat.scrollTop = chat.scrollHeight;
+};
+
