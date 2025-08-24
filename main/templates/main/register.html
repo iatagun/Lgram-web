@@ -1,0 +1,409 @@
+{% extends "main/auth_base.html" %}
+{% load static %}
+
+{% block title %}Register - Centering-Lgram{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Main Header Section matching homepage -->
+    <div class="text-center mb-4">
+        <h1>Join Centering-<span class="text-primary">Lgram</span></h1>
+        <p class="text-center">Create your account to access Advanced Language Model with Centering Theory</p>
+    </div>
+
+    <!-- Info section matching homepage style -->
+    <div class="info-section mb-4">
+        <p class="lead text-center">Join our growing community of researchers, linguists, developers and NLP enthusiasts.</p>
+        <p class="text-center">Get access to cutting-edge discourse coherence analysis, text generation capabilities, and comprehensive linguistic analysis tools.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <!-- Register Form in tabcontent style -->
+            <div class="tabcontent" style="display: block; margin-bottom: 2rem;">
+                <div class="text-center mb-4">
+                    <h3 class="text-success">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Create New Account
+                    </h3>
+                    <p class="text-muted">Fill in your details to get started</p>
+                </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                            <strong>
+                                {% if message.tags == 'error' %}
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% elif message.tags == 'success' %}
+                                    <i class="fas fa-check-circle me-2"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle me-2"></i>
+                                {% endif %}
+                            </strong>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" action="{% url 'register' %}" id="registerForm" class="row g-3">
+                    {% csrf_token %}
+                    
+                    <div class="col-md-6">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user me-2 text-primary"></i>Username
+                        </label>
+                        <input type="text" class="form-control form-control-lg" id="username" 
+                               name="username" required placeholder="Choose a unique username"
+                               autocomplete="username"
+                               value="{{ form.username.value|default:'' }}">
+                        {% if form.username.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.username.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Letters, numbers, and @/./+/-/_ characters only
+                        </small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope me-2 text-primary"></i>Email Address
+                        </label>
+                        <input type="email" class="form-control form-control-lg" id="email" 
+                               name="email" required placeholder="your.email@domain.com"
+                               autocomplete="email"
+                               value="{{ form.email.value|default:'' }}">
+                        {% if form.email.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.email.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            We'll never share your email
+                        </small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="password1" class="form-label">
+                            <i class="fas fa-lock me-2 text-primary"></i>Password
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control form-control-lg" id="password1" 
+                                   name="password1" required placeholder="Create a strong password"
+                                   autocomplete="new-password">
+                            <button class="btn btn-outline-success" type="button" id="togglePassword1">
+                                <i class="fas fa-eye" id="togglePassword1Icon"></i>
+                            </button>
+                        </div>
+                        {% if form.password1.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.password1.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="password-strength mt-2" style="height: 4px; background: #e9ecef; border-radius: 2px;">
+                            <div id="strength-bar" style="height: 100%; width: 0%; background: #dc3545; border-radius: 2px; transition: all 0.3s;"></div>
+                        </div>
+                        <small class="text-muted" id="strength-text">
+                            <i class="fas fa-key me-1"></i>
+                            Enter a password to see strength
+                        </small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="password2" class="form-label">
+                            <i class="fas fa-check-circle me-2 text-primary"></i>Confirm Password
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control form-control-lg" id="password2" 
+                                   name="password2" required placeholder="Confirm your password"
+                                   autocomplete="new-password">
+                            <button class="btn btn-outline-success" type="button" id="togglePassword2">
+                                <i class="fas fa-eye" id="togglePassword2Icon"></i>
+                            </button>
+                        </div>
+                        {% if form.password2.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.password2.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="text-muted" id="password-match">
+                            <i class="fas fa-sync me-1"></i>
+                            Re-enter your password
+                        </small>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <div class="form-check p-3" style="background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                            <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
+                            <label class="form-check-label" for="terms">
+                                <strong>
+                                    <i class="fas fa-file-contract me-2"></i>
+                                    I agree to the following:
+                                </strong>
+                                <ul class="mt-2 mb-0 small">
+                                    <li><a href="#" class="text-decoration-none">Terms of Service</a> - Usage guidelines and policies</li>
+                                    <li><a href="#" class="text-decoration-none">Privacy Policy</a> - How we handle your data</li>
+                                    <li><a href="#" class="text-decoration-none">Academic Use Agreement</a> - Research and academic usage terms</li>
+                                </ul>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-user-plus me-2"></i>Create Account & Start Exploring
+                        </button>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <div class="text-center">
+                    <p class="mb-3">
+                        <i class="fas fa-sign-in-alt text-muted me-2"></i>
+                        <span class="text-muted">Already have an account?</span>
+                    </p>
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-arrow-left me-2"></i>Sign In Instead
+                    </a>
+                </div>
+            </div>
+
+            <!-- Features Preview in info-section style -->
+            <div class="info-section">
+                <div class="text-center">
+                    <h5 class="text-success mb-4">
+                        <i class="fas fa-star me-2"></i>What You'll Get Access To
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-robot text-primary me-2"></i>Text Generation</h6>
+                            <small class="text-muted">AI-powered text creation with discourse coherence</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-chart-line text-info me-2"></i>Transition Analysis</h6>
+                            <small class="text-muted">Centering Theory transition pattern analysis</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-file-alt text-warning me-2"></i>Coherence Reports</h6>
+                            <small class="text-muted">Comprehensive discourse coherence evaluation</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-history text-secondary me-2"></i>Personal History</h6>
+                            <small class="text-muted">Track your analysis and generation history</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle password visibility functions
+function setupPasswordToggle(toggleId, passwordId, iconId) {
+    document.getElementById(toggleId).addEventListener('click', function() {
+        const password = document.getElementById(passwordId);
+        const icon = document.getElementById(iconId);
+        
+        if (password.type === 'password') {
+            password.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            password.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+}
+
+// Initialize password toggles
+setupPasswordToggle('togglePassword1', 'password1', 'togglePassword1Icon');
+setupPasswordToggle('togglePassword2', 'password2', 'togglePassword2Icon');
+
+// Password strength checker
+document.getElementById('password1').addEventListener('input', function() {
+    const password = this.value;
+    const strengthBar = document.getElementById('strength-bar');
+    const strengthText = document.getElementById('strength-text');
+    
+    let score = 0;
+    let feedback = '';
+    let color = '#dc3545'; // red
+    
+    // Length check
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    
+    // Character variety
+    if (/[a-z]/.test(password)) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^a-zA-Z0-9]/.test(password)) score += 1;
+    
+    // Set strength level
+    if (score <= 2) {
+        feedback = 'Weak password';
+        color = '#dc3545';
+    } else if (score <= 4) {
+        feedback = 'Medium strength';
+        color = '#ffc107';
+    } else {
+        feedback = 'Strong password';
+        color = '#28a745';
+    }
+    
+    if (password.length === 0) {
+        feedback = 'Enter a password to see strength';
+        score = 0;
+        color = '#e9ecef';
+    }
+    
+    strengthBar.style.width = (score * 16.67) + '%';
+    strengthBar.style.background = color;
+    strengthText.innerHTML = `<i class="fas fa-key me-1"></i>${feedback}`;
+});
+
+// Password match checker
+document.getElementById('password2').addEventListener('input', function() {
+    const password1 = document.getElementById('password1').value;
+    const password2 = this.value;
+    const matchText = document.getElementById('password-match');
+    
+    if (password2.length === 0) {
+        matchText.innerHTML = '<i class="fas fa-sync me-1"></i>Re-enter your password';
+        matchText.className = 'text-muted';
+    } else if (password1 === password2) {
+        matchText.innerHTML = '<i class="fas fa-check-circle me-1"></i>Passwords match!';
+        matchText.className = 'text-success';
+    } else {
+        matchText.innerHTML = '<i class="fas fa-times-circle me-1"></i>Passwords do not match';
+        matchText.className = 'text-danger';
+    }
+});
+
+// Enhanced form validation
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        const password1 = document.getElementById('password1').value;
+        const password2 = document.getElementById('password2').value;
+        const terms = document.getElementById('terms').checked;
+        const submitBtn = this.querySelector('button[type="submit"]');
+        
+        let hasError = false;
+        
+        if (password1 !== password2) {
+            e.preventDefault();
+            document.getElementById('password-match').innerHTML = '<i class="fas fa-times-circle me-1"></i>Passwords must match!';
+            document.getElementById('password-match').className = 'text-danger';
+            hasError = true;
+            return; // Exit early if validation fails
+        }
+        
+        if (!terms) {
+            e.preventDefault();
+            alert('Please accept the terms and conditions to continue.');
+            hasError = true;
+            return; // Exit early if validation fails
+        }
+        
+        // Only show loading state if no errors
+        if (!hasError) {
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating Account...';
+            submitBtn.disabled = true;
+            this.style.opacity = '0.9';
+        }
+    });
+
+    // Auto-focus and smooth animations
+    const usernameField = document.getElementById('username');
+    usernameField.focus();
+    
+    // Add focus animations to all form fields
+    const formControls = document.querySelectorAll('.form-control');
+    formControls.forEach(field => {
+        field.addEventListener('focus', function() {
+            this.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 200);
+        });
+    });
+});
+</script>
+
+<style>
+/* Additional register page specific styles */
+.tabcontent {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.form-control-lg {
+    transition: all 0.3s ease, transform 0.2s ease;
+}
+
+.form-control-lg:focus {
+    box-shadow: 0 0 0 0.3rem rgba(40, 167, 69, 0.25);
+    border-color: #28a745;
+}
+
+.btn-success.btn-lg {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-success.btn-lg:hover {
+    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.btn-primary.btn-lg {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.btn-primary.btn-lg:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.form-check {
+    transition: all 0.3s ease;
+}
+
+.form-check:hover {
+    background: #f1f3f4 !important;
+}
+
+.password-strength {
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .col-md-6 {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+{% endblock %}

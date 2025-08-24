@@ -1,0 +1,123 @@
+{% extends "main/base.html" %}
+
+{% block title %}Transition Analysis{% endblock %}
+
+{% block TransitionAnalysis %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="text-center mb-4">Centering Theory Transition Analysis</h2>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Analyze Discourse Transitions</h5>
+                </div>
+                <div class="card-body">
+                    <form id="transitionForm" method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="textInput" class="form-label">Text for Analysis:</label>
+                            <textarea class="form-control" id="textInput" name="text" rows="8" 
+                                      placeholder="Enter your text here for transition analysis..."></textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="sentenceRange" class="form-label">Sentence Window Size: <span id="sentenceRangeValue">3</span></label>
+                                <input type="range" class="form-range compact-slider" id="sentenceRange" 
+                                       name="sentence_window" min="1" max="10" value="3" 
+                                       oninput="updateSliderValue('sentenceRange', 'sentenceRangeValue')">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="coherenceThreshold" class="form-label">Coherence Threshold: <span id="coherenceThresholdValue">0.5</span></label>
+                                <input type="range" class="form-range compact-slider" id="coherenceThreshold" 
+                                       name="coherence_threshold" min="0.1" max="1.0" step="0.1" value="0.5" 
+                                       oninput="updateSliderValue('coherenceThreshold', 'coherenceThresholdValue')">
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-chart-line"></i> Analyze Transitions
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if analysis_results %}
+            <div class="card shadow mt-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Transition Analysis Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Transition Summary</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Continue Transitions:</span>
+                                    <span class="badge bg-success">{{ analysis_results.continue_count }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Retain Transitions:</span>
+                                    <span class="badge bg-warning">{{ analysis_results.retain_count }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Shift Transitions:</span>
+                                    <span class="badge bg-danger">{{ analysis_results.shift_count }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Rough Shifts:</span>
+                                    <span class="badge bg-dark">{{ analysis_results.rough_shift_count }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Coherence Score</h6>
+                            <div class="progress mb-3">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ analysis_results.coherence_score|floatformat:1 }}0%">
+                                    {{ analysis_results.coherence_score|floatformat:2 }}
+                                </div>
+                            </div>
+                            <small class="text-muted">Higher scores indicate better discourse coherence</small>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6>Detailed Transition Sequence</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Sentence</th>
+                                    <th>Transition Type</th>
+                                    <th>Center</th>
+                                    <th>Backward-Looking Center</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transition in analysis_results.transitions %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if transition.type == 'CONTINUE' %}success{% elif transition.type == 'RETAIN' %}warning{% elif transition.type == 'SHIFT' %}danger{% else %}dark{% endif %}">
+                                            {{ transition.type }}
+                                        </span>
+                                    </td>
+                                    <td>{{ transition.center|truncatechars:30 }}</td>
+                                    <td>{{ transition.backward_center|truncatechars:30 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

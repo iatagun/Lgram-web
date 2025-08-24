@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Centering-Lgram | Text Generator</title>
+        <link href="{% static 'main/css/style.css' %}" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid">
+            <a class="navbar-brand text-primary" href="https://dizge.pythonanywhere.com/">Dizge<sup>v0.1.6</sup></a>
+            
+            <!-- User Authentication Section -->
+            <div class="d-flex align-items-center">
+                {% if user.is_authenticated %}
+                    <div class="dropdown me-3">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-2"></i>{{ user.username }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                    <a href="{% url 'register' %}" class="btn btn-primary me-3">
+                        <i class="fas fa-user-plus me-2"></i>Register
+                    </a>
+                {% endif %}
+                
+                <div class="languageswitcher">
+                  <button type="button" class="btn btn-primary btn-sm" onclick="location.href='https://dizge.pythonanywhere.com/'">EN</button>
+                  <button type="button" class="btn btn-light btn-sm" onclick="location.href='https://dizge.pythonanywhere.com/tr'">TR</button>
+                </div>
+            </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <h1 class="text-center">Centering-<span class="text-primary">Lgram</span></h1>
+            <p class="text-center">Advanced Language Model with Centering Theory</p>
+
+            <div class="info-section mb-4">
+                <p class="lead">A sophisticated natural language processing library that combines N-gram language models with Centering Theory to generate coherent and contextually appropriate text.</p>
+                <p>Lgram provides state-of-the-art discourse coherence analysis and text generation capabilities, ensuring that generated text maintains proper contextual flow and linguistic coherence.</p>
+            </div>
+
+            <!-- Tab links -->
+            <div class="tab">
+                <button class="tablinks" onclick="openTab(event, 'Generator')" id="defaultOpen">Generate</button>
+                <button class="tablinks" onclick="openTab(event, 'History')" id="historyButton">History</button>
+                <button class="tablinks" onclick="openTab(event, 'TransitionAnalysis')" id="transitionButton">Transition Analysis</button>
+                <button class="tablinks" onclick="openTab(event, 'CoherenceReport')" id="coherenceButton">Coherence Report</button>
+            </div>
+
+            <!-- Tab content -->
+            <div id="Generator" class="tabcontent">
+                {% block Generator %}
+                {% endblock %}
+            </div>
+
+            <div id="History" class="tabcontent">
+                {% block History %}
+                {% endblock %}
+            </div>
+
+            <div id="TransitionAnalysis" class="tabcontent">
+                {% block TransitionAnalysis %}
+                <div class="container mt-4">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h2 class="text-center mb-4">Centering Theory Transition Analysis</h2>
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle me-2"></i>
+                                This feature will analyze discourse transitions using Centering Theory principles.
+                                <br><small class="text-muted">Coming soon...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endblock %}
+            </div>
+
+            <div id="CoherenceReport" class="tabcontent">
+                {% block CoherenceReport %}
+                <div class="container mt-4">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h2 class="text-center mb-4">Discourse Coherence Report</h2>
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle me-2"></i>
+                                This feature will generate detailed coherence analysis reports for texts.
+                                <br><small class="text-muted">Coming soon...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endblock %}
+            </div>
+            
+            <div class="clearfix"></div>
+        </div>
+
+        <div class="container">
+            <div id="output">
+                {% block output %}
+                {% endblock %}
+            </div>
+        </div>
+
+        <footer class="footer py-3 bg-light">
+            <div class="container">
+              <span class="text-muted">&copy; 2025 Centering-<span class="text-primary">Lgram</span> Project - Advanced NLP with Discourse Coherence | <a href="mailto:info@centering-lgram.org">Contact Us</a> | <a href="https://github.com/iatagun/Lgram-web">GitHub</a> | <a href="https://pypi.org/project/centering-lgram/">PyPI Package</a></span>
+            </div>
+        </footer>
+
+        <script src="{% static 'main/js/tabs.js' %}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+    </body>
+</html>

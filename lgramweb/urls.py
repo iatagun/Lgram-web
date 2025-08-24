@@ -16,9 +16,22 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from main.views import index
+from django.conf import settings
+from django.conf.urls.static import static
+from main.views import (
+    index, transition_analysis, coherence_report, 
+    login_view, register_view, logout_view
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index, name='index'),
+    path('transition-analysis/', transition_analysis, name='transition_analysis'),
+    path('coherence-report/', coherence_report, name='coherence_report'),
+    path('login/', login_view, name='login'),
+    path('register/', register_view, name='register'),
+    path('logout/', logout_view, name='logout'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])

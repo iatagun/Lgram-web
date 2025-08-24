@@ -1,0 +1,220 @@
+{% extends "main/base.html" %}
+
+{% block title %}Coherence Report{% endblock %}
+
+{% block CoherenceReport %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="text-center mb-4">Discourse Coherence Report</h2>
+            
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Generate Coherence Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <form id="coherenceForm" method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="textInput" class="form-label">Text for Coherence Analysis:</label>
+                            <textarea class="form-control" id="textInput" name="text" rows="8" 
+                                      placeholder="Enter your text here for coherence analysis..."></textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="analysisDepth" class="form-label">Analysis Depth: <span id="analysisDepthValue">Standard</span></label>
+                                <select class="form-select" id="analysisDepth" name="analysis_depth" 
+                                        onchange="updateSelectValue('analysisDepth', 'analysisDepthValue')">
+                                    <option value="basic">Basic</option>
+                                    <option value="standard" selected>Standard</option>
+                                    <option value="detailed">Detailed</option>
+                                    <option value="comprehensive">Comprehensive</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="entityWeight" class="form-label">Entity Weight: <span id="entityWeightValue">0.7</span></label>
+                                <input type="range" class="form-range compact-slider" id="entityWeight" 
+                                       name="entity_weight" min="0.1" max="1.0" step="0.1" value="0.7" 
+                                       oninput="updateSliderValue('entityWeight', 'entityWeightValue')">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="transitionWeight" class="form-label">Transition Weight: <span id="transitionWeightValue">0.3</span></label>
+                                <input type="range" class="form-range compact-slider" id="transitionWeight" 
+                                       name="transition_weight" min="0.1" max="1.0" step="0.1" value="0.3" 
+                                       oninput="updateSliderValue('transitionWeight', 'transitionWeightValue')">
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-info btn-lg">
+                                <i class="fas fa-file-alt"></i> Generate Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if coherence_report %}
+            <div class="card shadow mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Coherence Analysis Report</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <h5 class="card-title text-success">Overall Score</h5>
+                                    <h2 class="text-success">{{ coherence_report.overall_score|floatformat:2 }}</h2>
+                                    <small class="text-muted">Out of 1.0</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h6 class="card-title text-info">Entity Coherence</h6>
+                                    <h3 class="text-info">{{ coherence_report.entity_coherence|floatformat:2 }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <h6 class="card-title text-warning">Transition Coherence</h6>
+                                    <h3 class="text-warning">{{ coherence_report.transition_coherence|floatformat:2 }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="card border-secondary">
+                                <div class="card-body">
+                                    <h6 class="card-title text-secondary">Sentence Count</h6>
+                                    <h3 class="text-secondary">{{ coherence_report.sentence_count }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Coherence Breakdown</h6>
+                            <div class="mb-2">
+                                <small>Lexical Cohesion</small>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {{ coherence_report.lexical_cohesion|floatformat:0 }}%">
+                                        {{ coherence_report.lexical_cohesion|floatformat:1 }}%
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <small>Semantic Coherence</small>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" 
+                                         style="width: {{ coherence_report.semantic_coherence|floatformat:0 }}%">
+                                        {{ coherence_report.semantic_coherence|floatformat:1 }}%
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <small>Referential Coherence</small>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" 
+                                         style="width: {{ coherence_report.referential_coherence|floatformat:0 }}%;">
+                                        {{ coherence_report.referential_coherence|floatformat:1 }}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Key Entities</h6>
+                            <div class="list-group">
+                                {% for entity in coherence_report.key_entities %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ entity.text }}
+                                    <span class="badge bg-primary rounded-pill">{{ entity.frequency }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6>Detailed Analysis</h6>
+                    <div class="accordion" id="detailsAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="strengthsHeader">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#strengthsCollapse">
+                                    Coherence Strengths
+                                </button>
+                            </h2>
+                            <div id="strengthsCollapse" class="accordion-collapse collapse show" 
+                                 data-bs-parent="#detailsAccordion">
+                                <div class="accordion-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for strength in coherence_report.strengths %}
+                                        <li class="list-group-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            {{ strength }}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="improvementsHeader">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#improvementsCollapse">
+                                    Areas for Improvement
+                                </button>
+                            </h2>
+                            <div id="improvementsCollapse" class="accordion-collapse collapse" 
+                                 data-bs-parent="#detailsAccordion">
+                                <div class="accordion-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for improvement in coherence_report.improvements %}
+                                        <li class="list-group-item">
+                                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                            {{ improvement }}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="recommendationsHeader">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#recommendationsCollapse">
+                                    Recommendations
+                                </button>
+                            </h2>
+                            <div id="recommendationsCollapse" class="accordion-collapse collapse" 
+                                 data-bs-parent="#detailsAccordion">
+                                <div class="accordion-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for recommendation in coherence_report.recommendations %}
+                                        <li class="list-group-item">
+                                            <i class="fas fa-lightbulb text-info me-2"></i>
+                                            {{ recommendation }}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

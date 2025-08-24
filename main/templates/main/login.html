@@ -1,0 +1,293 @@
+{% extends "main/auth_base.html" %}
+{% load static %}
+
+{% block title %}Login - Centering-Lgram{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Main Header Section matching homepage -->
+    <div class="text-center mb-4">
+        <h1>Welcome to Centering-<span class="text-primary">Lgram</span></h1>
+        <p class="text-center">Sign in to access Advanced Language Model with Centering Theory</p>
+    </div>
+
+    <!-- Info section matching homepage style -->
+    <div class="info-section mb-4">
+        <p class="lead text-center">Please sign in to access your personal dashboard, generate coherent text, and analyze discourse transitions.</p>
+        <p class="text-center">Join our community of researchers, linguists, and developers working with state-of-the-art NLP technology.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Login Form in tabcontent style -->
+            <div class="tabcontent" style="display: block; margin-bottom: 2rem;">
+                <div class="text-center mb-4">
+                    <h3 class="text-primary">
+                        <i class="fas fa-user-circle me-2"></i>
+                        Sign In
+                    </h3>
+                    <p class="text-muted">Enter your credentials to continue</p>
+                </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                            <strong>
+                                {% if message.tags == 'error' %}
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% elif message.tags == 'success' %}
+                                    <i class="fas fa-check-circle me-2"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle me-2"></i>
+                                {% endif %}
+                            </strong>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" action="{% url 'login' %}" id="loginForm" class="row g-3">
+                    {% csrf_token %}
+                    
+                    <div class="col-12">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user me-2 text-primary"></i>Username
+                        </label>
+                        <input type="text" class="form-control form-control-lg" id="username" 
+                               name="username" required placeholder="Enter your username"
+                               autocomplete="username"
+                               value="{{ form.username.value|default:'' }}">
+                        {% if form.username.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.username.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-12">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock me-2 text-primary"></i>Password
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control form-control-lg" id="password" 
+                                   name="password" required placeholder="Enter your password"
+                                   autocomplete="current-password">
+                            <button class="btn btn-outline-primary" type="button" id="togglePassword">
+                                <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
+                        {% if form.password.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.password.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me">
+                            <label class="form-check-label" for="remember_me">
+                                <i class="fas fa-history me-1"></i>Remember me for 30 days
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In to Continue
+                        </button>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <div class="text-center">
+                    <p class="mb-3">
+                        <i class="fas fa-question-circle text-muted me-2"></i>
+                        <span class="text-muted">Don't have an account yet?</span>
+                    </p>
+                    <a href="{% url 'register' %}" class="btn btn-success btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Create New Account
+                    </a>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="#" class="text-muted small text-decoration-none">
+                        <i class="fas fa-key me-1"></i>Forgot your password?
+                    </a>
+                </div>
+            </div>
+
+            <!-- Demo Credentials - REMOVED for production -->
+            <!--
+            <div class="info-section">
+                <div class="text-center">
+                    <h5 class="text-info mb-3">
+                        <i class="fas fa-magic me-2"></i>Demo Access
+                    </h5>
+                    <p class="lead mb-3">Try our platform with demo credentials:</p>
+                    <div class="row justify-content-center mb-3">
+                        <div class="col-auto">
+                            <strong>Username:</strong> <code class="text-primary">demo</code>
+                        </div>
+                        <div class="col-auto">
+                            <strong>Password:</strong> <code class="text-primary">demo123</code>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-info" onclick="fillDemoCredentials()">
+                        <i class="fas fa-rocket me-2"></i>Use Demo Account
+                    </button>
+                </div>
+            </div>
+            -->
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle password visibility
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const password = document.getElementById('password');
+    const icon = document.getElementById('togglePasswordIcon');
+    
+    if (password.type === 'password') {
+        password.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        password.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+});
+
+// Demo credentials functionality - REMOVED for production
+/*
+function fillDemoCredentials() {
+    const usernameField = document.getElementById('username');
+    const passwordField = document.getElementById('password');
+    const button = event.target;
+    
+    // Animate button
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading Demo...';
+    button.disabled = true;
+    
+    setTimeout(() => {
+        usernameField.value = 'demo';
+        usernameField.focus();
+        
+        setTimeout(() => {
+            passwordField.value = 'demo123';
+            passwordField.focus();
+            
+            // Reset button
+            button.innerHTML = '<i class="fas fa-rocket me-2"></i>Demo Loaded!';
+            button.className = 'btn btn-success';
+            
+            setTimeout(() => {
+                button.innerHTML = '<i class="fas fa-rocket me-2"></i>Use Demo Account';
+                button.className = 'btn btn-outline-info';
+                button.disabled = false;
+            }, 1500);
+        }, 300);
+    }, 500);
+}
+*/
+
+// Enhanced form validation and animation
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        // Show loading state
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing In...';
+        submitBtn.disabled = true;
+        
+        // Visual feedback
+        this.style.opacity = '0.9';
+    });
+
+    // Auto-focus with smooth animation
+    const usernameField = document.getElementById('username');
+    usernameField.focus();
+    
+    // Add smooth focus animation
+    usernameField.addEventListener('focus', function() {
+        this.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            this.style.transform = 'scale(1)';
+        }, 200);
+    });
+    
+    document.getElementById('password').addEventListener('focus', function() {
+        this.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            this.style.transform = 'scale(1)';
+        }, 200);
+    });
+});
+</script>
+
+<style>
+/* Additional login page specific styles */
+.tabcontent {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.form-control-lg {
+    transition: all 0.3s ease, transform 0.2s ease;
+}
+
+.form-control-lg:focus {
+    box-shadow: 0 0 0 0.3rem rgba(0, 123, 255, 0.25);
+    border-color: #007bff;
+}
+
+.btn-lg {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-lg:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+code {
+    background: linear-gradient(135deg, #e7f1ff 0%, #d0e7ff 100%);
+    color: #0056b3;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    border: 1px solid #b3d7ff;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+</style>
+{% endblock %}
