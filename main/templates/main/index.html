@@ -5,7 +5,7 @@
         <form method="POST" id="textForm" onsubmit="return submitForm()">
             {% csrf_token %}
             <div class="mb-3">
-                <textarea class="form-control" name="input_text" id="input_text" rows="2" placeholder="Enter a starting sentence to generate text...">{{ request.POST.input_text }}</textarea>
+                <textarea class="form-control" name="input_text" id="input_text" rows="2" placeholder="Enter a starting sentence for statistical text generation (processing may take several minutes)...">{{ request.POST.input_text }}</textarea>
             </div>
             
             <div class="row mb-2">
@@ -40,13 +40,14 @@
     {% else %}
         <div class="alert alert-info text-center">
             <h4><i class="fas fa-info-circle me-2"></i>Welcome to Centering-Lgram!</h4>
-            <p class="lead">To use our advanced text generation features, please sign in to your account or create a new one.</p>
+            <p class="lead">This is an educational platform demonstrating statistical language modeling techniques combined with Centering Theory.</p>
+            <p class="mb-3">To explore our N-gram based text generation system, please sign in or create an account. <strong>Note:</strong> Text generation is computationally intensive and may take several minutes to complete.</p>
             <div class="mt-3">
                 <a href="{% url 'login' %}" class="btn btn-primary me-2">
                     <i class="fas fa-sign-in-alt me-2"></i>Sign In
                 </a>
                 <a href="{% url 'register' %}" class="btn btn-success">
-                    <i class="fas fa-user-plus me-2"></i>Register
+                    <i class="fas fa-user-plus me-2"></i>Create Account
                 </a>
             </div>
         </div>
@@ -88,19 +89,19 @@
         {% else %}
             <div class="text-center py-4">
                 <h6 class="text-muted">No text generated yet</h6>
-                <p class="text-muted">You can start from the Generate tab.</p>
+                <p class="text-muted">Start generating text from the Generate tab. Please allow sufficient time for the statistical model to process your request.</p>
             </div>
         {% endif %}
     {% else %}
         <div class="alert alert-warning text-center">
-            <h5><i class="fas fa-history me-2"></i>History Access</h5>
-            <p>Please sign in to view your generation history.</p>
+            <h5><i class="fas fa-history me-2"></i>Generation History</h5>
+            <p>Please sign in to view your text generation history and track your experiments with the statistical language model.</p>
             <div class="mt-3">
                 <a href="{% url 'login' %}" class="btn btn-primary me-2">
                     <i class="fas fa-sign-in-alt me-2"></i>Sign In
                 </a>
                 <a href="{% url 'register' %}" class="btn btn-success">
-                    <i class="fas fa-user-plus me-2"></i>Register
+                    <i class="fas fa-user-plus me-2"></i>Create Account
                 </a>
             </div>
         </div>
