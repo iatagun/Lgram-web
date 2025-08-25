@@ -1,37 +1,36 @@
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.contrib.auth import update_session_auth_hash
+from django.utils import timezone
+from datetime import timedelta
+import json
 
 from lgram.models.chunk import create_language_model
-from .models import GeneratedText
+from .models import GeneratedText, UserActivityLog, UserLoginLog
 from .utils import (
     log_user_login, log_user_logout, log_user_activity, 
     log_text_generation, get_client_ip
 )
+from .session_manager import SessionManager
 
 @csrf_exempt
 def index(request):
 	result = None
 	
-	# Session key için authenticated user'ın ID'sini kullan, eğer giriş yapmamışsa session_key kullan
-	if request.user.is_authenticated:
-		session_key = f"user_{request.user.id}"
-	else:
-		if not request.session.session_key:
-			request.session.create()
-		session_key = request.session.session_key
-
-	# Defaults
-	default_num_sentences = 5
-	default_length = 13
-	num_sentences = default_num_sentences
-	length = default_length
+	# Use SessionManager to get consistent session key
+	session_key = SessionManager.get_session_key(request)
+	
+	# Get user's generation settings from session
+	settings = SessionManager.get_generation_settings(request)
+	num_sentences = settings.get('num_sentences', 5)
+	length = settings.get('length', 13)
 
 	if request.method == 'POST':
 		# Handle clear history request
@@ -59,13 +58,19 @@ def index(request):
 			
 		# Get user settings if provided
 		try:
-			num_sentences = int(request.POST.get('num_sentences', default_num_sentences))
+			num_sentences = int(request.POST.get('num_sentences', num_sentences))
 		except Exception:
-			num_sentences = default_num_sentences
+			pass  # Keep default from session
 		try:
-			length = int(request.POST.get('length', default_length))
+			length = int(request.POST.get('length', length))
 		except Exception:
-			length = default_length
+			pass  # Keep default from session
+		
+		# Save settings to session for next time
+		SessionManager.store_generation_settings(request, {
+			'num_sentences': num_sentences,
+			'length': length
+		})
 		input_words = text.strip().rstrip('.').split()
 		try:
 			model = create_language_model()
@@ -337,5 +342,208 @@ def logout_view(request):
 	if username:
 		messages.info(request, f'You have been logged out successfully.')
 	return redirect('index')
+
+def session_info_view(request):
+	"""Display session information for debugging/educational purposes"""
+	session_info = SessionManager.get_session_info(request)
+	generation_settings = SessionManager.get_generation_settings(request)
+	recent_activities = SessionManager.get_recent_activities(request)
+	
+	# Convert timestamp strings back to datetime objects for template
+	for activity in recent_activities:
+		from django.utils.dateparse import parse_datetime
+		activity['timestamp'] = parse_datetime(activity['timestamp'])
+	
+	return render(request, 'main/session_info.html', {
+		'session_info': session_info,
+		'generation_settings': generation_settings,
+		'recent_activities': recent_activities[-10:],  # Last 10 activities
+	})
+
+@login_required
+def profile_view(request):
+	"""Display user profile information"""
+	# Get user statistics
+	total_generations = GeneratedText.objects.filter(user=request.user).count()
+	total_activities = UserActivityLog.objects.filter(user=request.user).count()
+	login_count = UserLoginLog.objects.filter(user=request.user, login_successful=True).count()
+	days_member = (timezone.now() - request.user.date_joined).days
+	
+	stats = {
+		'total_generations': total_generations,
+		'total_activities': total_activities,
+		'login_count': login_count,
+		'days_member': days_member,
+	}
+	
+	# Get recent activities
+	recent_activities = UserActivityLog.objects.filter(
+		user=request.user
+	).order_by('-timestamp')[:10]
+	
+	return render(request, 'main/profile.html', {
+		'stats': stats,
+		'recent_activities': recent_activities,
+	})
+
+@login_required
+def settings_view(request):
+	"""Handle user settings and preferences"""
+	if request.method == 'POST':
+		form_type = request.POST.get('form_type')
+		
+		if form_type == 'profile':
+			# Update profile information
+			request.user.first_name = request.POST.get('first_name', '')
+			request.user.last_name = request.POST.get('last_name', '')
+			request.user.email = request.POST.get('email', '')
+			request.user.save()
+			
+			log_user_activity(
+				user=request.user,
+				action='update_profile',
+				description='Updated profile information',
+				request=request
+			)
+			
+			messages.success(request, 'Profile updated successfully!')
+			
+		elif form_type == 'generation':
+			# Update generation preferences
+			settings = {
+				'num_sentences': int(request.POST.get('default_sentences', 5)),
+				'length': int(request.POST.get('default_length', 13)),
+			}
+			SessionManager.store_generation_settings(request, settings)
+			
+			# Store other preferences
+			SessionManager.store_user_preference(request, 'save_history', 'save_history' in request.POST)
+			SessionManager.store_user_preference(request, 'show_tips', 'show_tips' in request.POST)
+			
+			log_user_activity(
+				user=request.user,
+				action='update_preferences',
+				description='Updated generation preferences',
+				request=request
+			)
+			
+			messages.success(request, 'Preferences saved successfully!')
+			
+		elif form_type == 'password':
+			# Change password
+			current_password = request.POST.get('current_password')
+			new_password1 = request.POST.get('new_password1')
+			new_password2 = request.POST.get('new_password2')
+			
+			if not request.user.check_password(current_password):
+				messages.error(request, 'Current password is incorrect.')
+			elif new_password1 != new_password2:
+				messages.error(request, 'New passwords do not match.')
+			elif len(new_password1) < 8:
+				messages.error(request, 'New password must be at least 8 characters long.')
+			else:
+				request.user.set_password(new_password1)
+				request.user.save()
+				update_session_auth_hash(request, request.user)  # Keep user logged in
+				
+				log_user_activity(
+					user=request.user,
+					action='change_password',
+					description='Changed account password',
+					request=request
+				)
+				
+				messages.success(request, 'Password changed successfully!')
+				
+		elif form_type == 'clear_history':
+			# Clear all user history
+			deleted_count = GeneratedText.objects.filter(user=request.user).count()
+			GeneratedText.objects.filter(user=request.user).delete()
+			
+			log_user_activity(
+				user=request.user,
+				action='clear_history',
+				description=f'Cleared all history ({deleted_count} items)',
+				request=request
+			)
+			
+			messages.warning(request, f'Successfully deleted {deleted_count} generation records.')
+		
+		return redirect('settings')
+	
+	# GET request - display settings form
+	generation_settings = SessionManager.get_generation_settings(request)
+	user_preferences = {
+		'save_history': SessionManager.get_user_preference(request, 'save_history', True),
+		'show_tips': SessionManager.get_user_preference(request, 'show_tips', True),
+	}
+	
+	return render(request, 'main/settings.html', {
+		'generation_settings': generation_settings,
+		'user_preferences': user_preferences,
+	})
+
+@login_required
+def export_data_view(request):
+	"""Export user data as JSON"""
+	# Collect user data
+	user_data = {
+		'user_info': {
+			'username': request.user.username,
+			'email': request.user.email,
+			'first_name': request.user.first_name,
+			'last_name': request.user.last_name,
+			'date_joined': request.user.date_joined.isoformat(),
+			'last_login': request.user.last_login.isoformat() if request.user.last_login else None,
+		},
+		'generated_texts': list(
+			GeneratedText.objects.filter(user=request.user).values(
+				'input_text', 'generated_text', 'created_at'
+			)
+		),
+		'activities': list(
+			UserActivityLog.objects.filter(user=request.user).values(
+				'action', 'description', 'timestamp', 'ip_address'
+			)
+		),
+		'login_history': list(
+			UserLoginLog.objects.filter(user=request.user).values(
+				'login_time', 'logout_time', 'ip_address', 'login_successful'
+			)
+		),
+		'export_date': timezone.now().isoformat(),
+	}
+	
+	# Convert datetime objects to strings
+	for item in user_data['generated_texts']:
+		if item['created_at']:
+			item['created_at'] = item['created_at'].isoformat()
+	
+	for item in user_data['activities']:
+		if item['timestamp']:
+			item['timestamp'] = item['timestamp'].isoformat()
+	
+	for item in user_data['login_history']:
+		if item['login_time']:
+			item['login_time'] = item['login_time'].isoformat()
+		if item['logout_time']:
+			item['logout_time'] = item['logout_time'].isoformat()
+	
+	# Log export activity
+	log_user_activity(
+		user=request.user,
+		action='export_data',
+		description='Exported personal data',
+		request=request
+	)
+	
+	# Return JSON response
+	response = HttpResponse(
+		json.dumps(user_data, indent=2, ensure_ascii=False),
+		content_type='application/json'
+	)
+	response['Content-Disposition'] = f'attachment; filename="{request.user.username}_data_export.json"'
+	
+	return response
 
 # Demo user creation function removed - no longer needed for production

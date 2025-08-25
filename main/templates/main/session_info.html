@@ -1,0 +1,106 @@
+{% extends 'main/base.html' %}
+
+{% block Generator %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h2 class="text-center mb-4">Session Information</h2>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle me-2"></i>Current Session Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Authentication</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Status:</strong> {{ session_info.is_authenticated|yesno:"Authenticated,Anonymous" }}</li>
+                                {% if session_info.username %}
+                                    <li><strong>Username:</strong> {{ session_info.username }}</li>
+                                    <li><strong>User ID:</strong> {{ session_info.user_id }}</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Session Details</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Session Key:</strong> {{ session_info.session_key|truncatechars:16 }}...</li>
+                                <li><strong>Expires:</strong> {{ session_info.session_expires|date:"M d, Y H:i" }}</li>
+                                <li><strong>Age:</strong> {{ session_info.session_age|floatformat:0 }} seconds</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Activity</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Recent Activities:</strong> {{ session_info.recent_activities_count }}</li>
+                                <li><strong>Stored Preferences:</strong> {{ session_info.stored_preferences|length }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Generation Settings</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Sentences:</strong> {{ generation_settings.num_sentences }}</li>
+                                <li><strong>Length:</strong> {{ generation_settings.length }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if recent_activities %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock me-2"></i>Recent Activities</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Timestamp</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in recent_activities %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-primary">{{ activity.type }}</span>
+                                    </td>
+                                    <td>
+                                        <small>{{ activity.timestamp|date:"H:i:s" }}</small>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            {% if activity.metadata.path %}
+                                                {{ activity.metadata.path }}
+                                            {% else %}
+                                                {{ activity.metadata|truncatechars:50 }}
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="text-center mt-4">
+                <a href="{% url 'index' %}" class="btn btn-primary">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

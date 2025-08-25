@@ -20,7 +20,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from main.views import (
     index, transition_analysis, coherence_report, 
-    login_view, register_view, logout_view
+    login_view, register_view, logout_view, session_info_view,
+    profile_view, settings_view, export_data_view
 )
 
 urlpatterns = [
@@ -31,6 +32,10 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('register/', register_view, name='register'),
     path('logout/', logout_view, name='logout'),
+    path('session-info/', session_info_view, name='session_info'),
+    path('profile/', profile_view, name='profile'),
+    path('settings/', settings_view, name='settings'),
+    path('export-data/', export_data_view, name='export_data'),
 ]
 
 if settings.DEBUG:

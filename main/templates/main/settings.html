@@ -1,0 +1,222 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Settings - {{ user.username }}{% endblock %}
+
+{% block Generator %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <h2 class="text-center mb-4">
+                <i class="fas fa-cog me-2"></i>Account Settings
+            </h2>
+            
+            <!-- Profile Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-user-edit me-2"></i>Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'settings' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="profile">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                                           value="{{ user.first_name }}" placeholder="Enter your first name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="last_name" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                                           value="{{ user.last_name }}" placeholder="Enter your last name">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ user.email }}" placeholder="Enter your email address">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Generation Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-sliders-h me-2"></i>Text Generation Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'settings' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="generation">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="default_sentences" class="form-label">
+                                        Default Number of Sentences: <span class="text-primary" id="sentences_value">{{ generation_settings.num_sentences }}</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="default_sentences" name="default_sentences" 
+                                           value="{{ generation_settings.num_sentences }}" min="1" max="10"
+                                           oninput="document.getElementById('sentences_value').textContent = this.value">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="default_length" class="form-label">
+                                        Default Sentence Length: <span class="text-primary" id="length_value">{{ generation_settings.length }}</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="default_length" name="default_length" 
+                                           value="{{ generation_settings.length }}" min="5" max="30"
+                                           oninput="document.getElementById('length_value').textContent = this.value">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="save_history" name="save_history" 
+                                       {% if user_preferences.save_history %}checked{% endif %}>
+                                <label class="form-check-label" for="save_history">
+                                    Save generation history automatically
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="show_tips" name="show_tips" 
+                                       {% if user_preferences.show_tips %}checked{% endif %}>
+                                <label class="form-check-label" for="show_tips">
+                                    Show helpful tips and explanations
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Save Preferences
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Password Change -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-key me-2"></i>Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'settings' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="password">
+                        
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" 
+                                   placeholder="Enter your current password">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="new_password1" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="new_password1" name="new_password1" 
+                                           placeholder="Enter your new password">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="new_password2" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="new_password2" name="new_password2" 
+                                           placeholder="Confirm your new password">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-lock me-2"></i>Change Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Account Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Account Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Clear All History</h6>
+                            <p class="text-muted">Delete all your text generation history permanently.</p>
+                            <button type="button" class="btn btn-outline-danger" onclick="clearAllHistory()">
+                                <i class="fas fa-trash me-2"></i>Clear History
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Download Data</h6>
+                            <p class="text-muted">Download all your data in JSON format.</p>
+                            <a href="{% url 'export_data' %}" class="btn btn-outline-info">
+                                <i class="fas fa-download me-2"></i>Export Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="{% url 'profile' %}" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-user me-2"></i>View Profile
+                </a>
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function clearAllHistory() {
+    if (confirm('Are you sure you want to delete ALL your generation history?\n\nThis action cannot be undone!')) {
+        if (confirm('This will permanently delete all your generated texts. Are you absolutely sure?')) {
+            // Create and submit form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "settings" %}';
+            form.style.display = 'none';
+            
+            // CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            
+            // Form type
+            const formTypeInput = document.createElement('input');
+            formTypeInput.type = 'hidden';
+            formTypeInput.name = 'form_type';
+            formTypeInput.value = 'clear_history';
+            
+            form.appendChild(csrfInput);
+            form.appendChild(formTypeInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
+</script>
+{% endblock %}

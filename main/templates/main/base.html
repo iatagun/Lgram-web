@@ -22,8 +22,9 @@
                             <i class="fas fa-user me-2"></i>{{ user.username }}
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><a class="dropdown-item" href="/profile/"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/settings/"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><a class="dropdown-item" href="/session-info/"><i class="fas fa-info-circle me-2"></i>Session Info</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                         </ul>
@@ -46,7 +47,7 @@
         </nav>
 
         <div class="container">
-            <h1 class="text-center">Centering-<span class="text-primary">Lgram</span></h1>
+            <h1 class="text-center" style="font-size: 3.5rem; font-weight: 700; margin-bottom: 1rem;">Centering-<span class="text-primary">Lgram</span></h1>
             <p class="text-center">Statistical Language Model with Centering Theory</p>
 
             <div class="info-section mb-4">

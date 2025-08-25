@@ -134,3 +134,12 @@ LOGOUT_REDIRECT_URL = '/login/'
 # Session settings
 SESSION_COOKIE_AGE = 86400 * 30  # 30 days
 SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Prevent XSS attacks
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Store in database
+
+# Session cleanup settings
+SESSION_COOKIE_NAME = 'lgram_sessionid'
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'

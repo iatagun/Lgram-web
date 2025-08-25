@@ -1,0 +1,142 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Profile - {{ user.username }}{% endblock %}
+
+{% block Generator %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h2 class="text-center mb-4">
+                <i class="fas fa-user-circle me-2"></i>User Profile
+            </h2>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle me-2"></i>Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-user-circle" style="font-size: 5rem; color: #007bff;"></i>
+                            </div>
+                            <h4>{{ user.username }}</h4>
+                            <p class="text-muted">Member since {{ user.date_joined|date:"M Y" }}</p>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Username:</strong></div>
+                                <div class="col-sm-8">{{ user.username }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Email:</strong></div>
+                                <div class="col-sm-8">{{ user.email|default:"Not provided" }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>First Name:</strong></div>
+                                <div class="col-sm-8">{{ user.first_name|default:"Not provided" }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Last Name:</strong></div>
+                                <div class="col-sm-8">{{ user.last_name|default:"Not provided" }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Member Since:</strong></div>
+                                <div class="col-sm-8">{{ user.date_joined|date:"F j, Y" }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Last Login:</strong></div>
+                                <div class="col-sm-8">{{ user.last_login|date:"F j, Y H:i"|default:"Never" }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Account Status:</strong></div>
+                                <div class="col-sm-8">
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line me-2"></i>Usage Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <h3 class="text-primary">{{ stats.total_generations }}</h3>
+                            <small class="text-muted">Text Generations</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h3 class="text-info">{{ stats.total_activities }}</h3>
+                            <small class="text-muted">Total Activities</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h3 class="text-success">{{ stats.login_count }}</h3>
+                            <small class="text-muted">Total Logins</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h3 class="text-warning">{{ stats.days_member }}</h3>
+                            <small class="text-muted">Days Member</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Activity</th>
+                                        <th>Date</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for activity in recent_activities %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-primary">{{ activity.action }}</span>
+                                        </td>
+                                        <td>
+                                            <small>{{ activity.timestamp|date:"M j, H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            <small>{{ activity.description|truncatechars:50 }}</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No recent activities found.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="{% url 'settings' %}" class="btn btn-primary me-2">
+                    <i class="fas fa-cog me-2"></i>Account Settings
+                </a>
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-home me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
