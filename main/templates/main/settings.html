@@ -62,7 +62,7 @@
                         <input type="hidden" name="form_type" value="generation">
                         
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="default_sentences" class="form-label">
                                         Default Number of Sentences: <span class="text-primary" id="sentences_value">{{ generation_settings.num_sentences }}</span>
@@ -72,7 +72,7 @@
                                            oninput="document.getElementById('sentences_value').textContent = this.value">
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="default_length" class="form-label">
                                         Default Sentence Length: <span class="text-primary" id="length_value">{{ generation_settings.length }}</span>
@@ -80,6 +80,29 @@
                                     <input type="range" class="form-range" id="default_length" name="default_length" 
                                            value="{{ generation_settings.length }}" min="5" max="30"
                                            oninput="document.getElementById('length_value').textContent = this.value">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-cogs me-1"></i>Default Generation Method:
+                                    </label>
+                                    <div class="form-check-compact mb-2">
+                                        <input class="form-check-input" type="radio" name="default_model_type" id="default_chunk" 
+                                               value="chunk" {% if generation_settings.model_type == 'chunk' or not generation_settings.model_type %}checked{% endif %}>
+                                        <label class="form-check-label-compact" for="default_chunk">
+                                            <strong>Standard</strong>
+                                            <small>Traditional with correction</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check-compact">
+                                        <input class="form-check-input" type="radio" name="default_model_type" id="default_centering" 
+                                               value="centering" {% if generation_settings.model_type == 'centering' %}checked{% endif %}>
+                                        <label class="form-check-label-compact" for="default_centering">
+                                            <strong>Centering-Enhanced</strong>
+                                            <small>Improved coherence</small>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>

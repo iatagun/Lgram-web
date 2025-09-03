@@ -12,7 +12,7 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 
-from lgram.models.chunk import create_language_model
+from lgram.models.simple_language_model import create_language_model
 from .models import GeneratedText, UserActivityLog, UserLoginLog
 from .utils import (
     log_user_login, log_user_logout, log_user_activity, 
@@ -31,6 +31,13 @@ def index(request):
 	settings = SessionManager.get_generation_settings(request)
 	num_sentences = settings.get('num_sentences', 5)
 	length = settings.get('length', 13)
+	model_type = settings.get('model_type', 'chunk')  # Default to standard generation
+	
+	# GET request'inde son generation sonucunu kontrol et
+	if request.method == 'GET' and 'last_generation' in request.session:
+		last_gen = request.session.pop('last_generation')  # Bir kere göster, sonra sil
+		result = last_gen.get('result')
+		messages.info(request, f'Last generation used: {last_gen.get("model_name", "Unknown")}')
 
 	if request.method == 'POST':
 		# Handle clear history request
@@ -66,44 +73,92 @@ def index(request):
 		except Exception:
 			pass  # Keep default from session
 		
+		# Get model type selection
+		model_type = request.POST.get('model_type', model_type)
+		
 		# Save settings to session for next time
 		SessionManager.store_generation_settings(request, {
 			'num_sentences': num_sentences,
-			'length': length
+			'length': length,
+			'model_type': model_type
 		})
 		input_words = text.strip().rstrip('.').split()
 		try:
+			# Tek model kullan ama iki farklı generation metodu
 			model = create_language_model()
-			generated_text = model.generate_text(
-				num_sentences=num_sentences,
-				input_words=input_words,
-				length=length,
-				use_progress_bar=True
-			)
-			corrected_text = model.correct_grammar_t5(generated_text)
-			result = corrected_text
-			# Save to DB
+			
+			if model_type == 'centering':
+				generated_text = model.generate_text_with_centering(
+					num_sentences=num_sentences,
+					input_words=input_words,
+					length=length
+				)
+				model_name = "Centering-Enhanced Generation"
+				corrected_text = model.correct_grammar_t5(generated_text)
+				result = corrected_text
+			else:
+				generated_text = model.generate_text(
+					num_sentences=num_sentences,
+					input_words=input_words,
+					length=length,
+					use_progress_bar=True
+				)
+				model_name = "Standard Generation"
+				# Standard generation için T5 correction kullan
+				corrected_text = model.correct_grammar_t5(generated_text)
+				result = corrected_text
+			
+			messages.info(request, f'Using {model_name} method')
+			
+			# Save to DB with model type info
 			generated_text_obj = GeneratedText.objects.create(
 				user=request.user if request.user.is_authenticated else None,
 				session_key=session_key,
 				input_text=text,
-				generated_text=corrected_text,
+				generated_text=result,
 				ip_address=get_client_ip(request)
 			)
 			
-			# Log activity
+			# Log activity with model type
 			log_text_generation(
 				user=request.user if request.user.is_authenticated else None,
 				session_key=session_key,
 				input_text=text,
-				generated_text=corrected_text,
+				generated_text=result,
 				request=request
 			)
 			
-			messages.success(request, 'Text generated successfully!')
+			# Add model info to activity log
+			log_user_activity(
+				user=request.user if request.user.is_authenticated else None,
+				action='generate_text',
+				description=f'Generated text using {model_name}',
+				request=request,
+				additional_data={
+					'model_type': model_type,
+					'model_name': model_name,
+					'input_length': len(text),
+					'output_length': len(result) if result else 0
+				}
+			)
+			
+			messages.success(request, f'Text generated successfully with {model_name}!')
+			
+			# Sonucu session'a kaydet (redirect sonrası gösterebilmek için)
+			request.session['last_generation'] = {
+				'result': result,
+				'input_text': text,
+				'model_name': model_name,
+				'num_sentences': num_sentences,
+				'length': length
+			}
+			
+			# POST-redirect-GET pattern: form resubmission'ı önlemek için redirect
+			return redirect('index')
+			
 		except Exception as e:
-			result = f'Error: {e}'
 			messages.error(request, f'Generation failed: {str(e)}')
+			return redirect('index')
 
 	# Get user's history (last 10)
 	history = GeneratedText.objects.filter(session_key=session_key).order_by('-created_at')[:10]
@@ -122,6 +177,7 @@ def index(request):
 		'history': history,
 		'num_sentences': num_sentences,
 		'length': length,
+		'model_type': model_type,
 	})
 
 @csrf_exempt
@@ -413,6 +469,7 @@ def settings_view(request):
 			settings = {
 				'num_sentences': int(request.POST.get('default_sentences', 5)),
 				'length': int(request.POST.get('default_length', 13)),
+				'model_type': request.POST.get('default_model_type', 'chunk'),
 			}
 			SessionManager.store_generation_settings(request, settings)
 			

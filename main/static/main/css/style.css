@@ -16,6 +16,186 @@ body {
     clear: both;
 }
 
+/* Compact Form Check Styling - Model Selection için */
+.form-check-compact {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.form-check-compact:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+    border-color: #007bff;
+}
+
+.form-check-compact:has(.form-check-input:checked) {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.15);
+}
+
+.form-check-label-compact {
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 0;
+    line-height: 1.3;
+}
+
+.form-check-label-compact strong {
+    display: block;
+    font-size: 0.9rem;
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.form-check-label-compact small {
+    display: block;
+    font-size: 0.75rem;
+    color: #6c757d;
+    line-height: 1.2;
+}
+
+.form-check-compact .form-check-input:checked ~ .form-check-label-compact strong {
+    color: #0056b3;
+}
+
+.form-check-compact .form-check-input:checked ~ .form-check-label-compact small {
+    color: #495057;
+}
+
+/* Model Selection Styling */
+.model-selection-group {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.model-selection-group:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.model-selection-group label {
+    margin-bottom: 15px;
+    color: #495057;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.model-selection-group .form-check {
+    background: #ffffff;
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    padding: 15px 18px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.model-selection-group .form-check:hover {
+    background-color: rgba(0, 123, 255, 0.03);
+    border-color: #007bff;
+    transform: translateX(3px);
+}
+
+.model-selection-group .form-check-input:checked ~ .form-check-label {
+    color: #0056b3;
+    font-weight: 600;
+}
+
+.model-selection-group .form-check-input:checked ~ .form-check-label strong {
+    color: #0056b3;
+}
+
+.model-selection-group .form-check:has(.form-check-input:checked) {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+    border-color: #007bff;
+    box-shadow: 0 3px 8px rgba(0, 123, 255, 0.2);
+}
+
+.model-selection-group .form-check:has(.form-check-input:checked)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 4px;
+    background: linear-gradient(180deg, #007bff 0%, #0056b3 100%);
+}
+
+.model-selection-group .form-check-label {
+    cursor: pointer;
+    line-height: 1.4;
+    padding-left: 8px;
+}
+
+.model-selection-group .form-check-label strong {
+    font-size: 1.05rem;
+    display: block;
+    margin-bottom: 4px;
+    transition: color 0.3s ease;
+}
+
+.model-selection-group .form-check-label small {
+    color: #6c757d;
+    font-size: 0.875rem;
+    transition: color 0.3s ease;
+}
+
+.model-selection-group .form-check-input:checked ~ .form-check-label small {
+    color: #495057;
+}
+
+/* Model Badge Icons */
+.model-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 10px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.model-badge.standard {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.model-badge.centering {
+    background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+    color: white;
+}
+
+.form-check-input:checked ~ .form-check-label .model-badge {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Animation for selection */
+@keyframes selectPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.form-check-input:checked ~ .form-check-label {
+    animation: selectPulse 0.4s ease-in-out;
+}
+
 /* Navbar Styling */
 .navbar {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
