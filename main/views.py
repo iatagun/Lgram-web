@@ -94,8 +94,8 @@ def index(request):
 					length=length
 				)
 				model_name = "Centering-Enhanced Generation"
-				corrected_text = model.correct_grammar_t5(generated_text)
-				result = corrected_text
+				# Centering için T5 correction kullanma - ham output
+				result = generated_text
 			else:
 				generated_text = model.generate_text(
 					num_sentences=num_sentences,
