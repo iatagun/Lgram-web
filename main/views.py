@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth import update_session_auth_hash
 from django.utils import timezone, translation
+from django.conf import settings
 from datetime import timedelta
 import json
 
@@ -32,7 +33,11 @@ def switch_language(request):
         
         # Activate the language
         translation.activate(language)
-        request.session[translation.LANGUAGE_SESSION_KEY] = language
+        
+        # Use Django's session key for language
+        # Define the key manually since it's not always exposed
+        LANGUAGE_SESSION_KEY = 'django_language'
+        request.session[LANGUAGE_SESSION_KEY] = language
         
         # Log language switch
         log_user_activity(
@@ -205,6 +210,7 @@ def index(request):
 			
 			if model_type == 'centering':
 				print("[DEBUG] Using centering generation")  # Debug log
+				print(f"[DEBUG] Parameters - num_sentences: {num_sentences}, length: {length}")  # Debug log
 				# Centering generation için user'ın istediği parametre sayısı
 				try:
 					generated_text = model.generate_text_with_centering(
@@ -213,7 +219,28 @@ def index(request):
 						use_progress_bar=True,  # Progress bar açık
 						length=length  # Kullanıcının istediği uzunluk
 					)
-					print(f"[DEBUG] Centering generation completed: '{generated_text[:50]}...'")  # Debug log
+					print(f"[DEBUG] Centering generation completed: '{generated_text[:100]}...'")  # Debug log
+					actual_sentences = len([s.strip() for s in generated_text.split('.') if s.strip()])
+					print(f"[DEBUG] Generated text sentence count: {actual_sentences}, requested: {num_sentences}")  # Count sentences
+					
+					# Check if we got fewer sentences than requested
+					if actual_sentences < num_sentences:
+						print(f"[WARNING] Centering generation returned {actual_sentences} sentences, but {num_sentences} were requested")
+						print("[DEBUG] Falling back to standard generation for consistency")
+						# Fallback to standard generation for more reliable sentence count
+						generated_text = model.generate_text(
+							num_sentences=num_sentences,  # Kullanıcının istediği sayı
+							input_words=input_words,
+							length=length,  # Kullanıcının istediği uzunluk
+							use_progress_bar=True
+						)
+						print(f"[DEBUG] Fallback to standard generation: '{generated_text[:100]}...'")
+						fallback_sentences = len([s.strip() for s in generated_text.split('.') if s.strip()])
+						print(f"[DEBUG] Fallback sentence count: {fallback_sentences}")
+						model_name = "Standard Generation (Fallback)"
+					else:
+						model_name = "Centering-Enhanced Generation"
+						
 				except Exception as centering_error:
 					print(f"[DEBUG] Centering generation failed: {centering_error}")  # Debug log
 					# Fallback to standard generation
@@ -223,9 +250,15 @@ def index(request):
 						length=length,  # Kullanıcının istediği uzunluk
 						use_progress_bar=True
 					)
-					print(f"[DEBUG] Fallback to standard generation: '{generated_text[:50]}...'")  # Debug log
+					print(f"[DEBUG] Fallback to standard generation: '{generated_text[:100]}...'")  # Debug log
+					fallback_sentences = len([s.strip() for s in generated_text.split('.') if s.strip()])
+					print(f"[DEBUG] Fallback sentence count: {fallback_sentences}")  # Count sentences
+					model_name = "Standard Generation (Error Fallback)"
 				
-				model_name = "Centering-Enhanced Generation"
+				# Only set model name if not already set by fallback logic
+				if 'model_name' not in locals():
+					model_name = "Centering-Enhanced Generation"
+				
 				# Centering için T5 correction kullanarak kaliteyi artır
 				print("[DEBUG] Starting T5 correction...")  # Debug log
 				try:
@@ -237,6 +270,7 @@ def index(request):
 					result = generated_text
 			else:
 				print("[DEBUG] Using standard generation")  # Debug log
+				print(f"[DEBUG] Parameters - num_sentences: {num_sentences}, length: {length}")  # Debug log
 				try:
 					generated_text = model.generate_text(
 						num_sentences=num_sentences,
@@ -244,7 +278,8 @@ def index(request):
 						length=length,
 						use_progress_bar=False  # Progress bar kapalı = daha hızlı
 					)
-					print(f"[DEBUG] Standard generation completed: '{generated_text[:50]}...'")  # Debug log
+					print(f"[DEBUG] Standard generation completed: '{generated_text[:100]}...'")  # Debug log
+					print(f"[DEBUG] Generated text sentence count: {len([s for s in generated_text.split('.') if s.strip()])}")  # Count sentences
 				except Exception as std_error:
 					print(f"[DEBUG] Standard generation failed: {std_error}")  # Debug log
 					# Minimal fallback
@@ -262,7 +297,17 @@ def index(request):
 					result = generated_text
 			
 			print(f"[DEBUG] Final result: '{result[:50]}...'")  # Debug log
-			messages.info(request, f'Using {model_name} method')
+			
+			# Add user notification about sentence count if fallback was used
+			if "Fallback" in model_name:
+				messages.warning(request, f'Note: Switched to {model_name} for better sentence count accuracy.')
+			else:
+				messages.info(request, f'Using {model_name} method')
+			
+			# Count final sentences for user feedback
+			final_sentence_count = len([s.strip() for s in result.split('.') if s.strip()])
+			if final_sentence_count != num_sentences:
+				messages.warning(request, f'Generated {final_sentence_count} sentences (requested {num_sentences}). This is due to model limitations.')
 			
 			# Save to DB with model type info
 			generated_text_obj = GeneratedText.objects.create(
