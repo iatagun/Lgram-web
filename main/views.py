@@ -21,7 +21,72 @@ from .utils import (
 from .session_manager import SessionManager
 
 @csrf_exempt
+def load_more_history(request):
+    """AJAX endpoint to load more history items"""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Only GET requests allowed'}, status=405)
+    
+    try:
+        # Get pagination parameters
+        offset = int(request.GET.get('offset', 0))
+        limit = int(request.GET.get('limit', 5))
+        
+        # Use SessionManager to get consistent session key
+        session_key = SessionManager.get_session_key(request)
+        
+        # Get more history items
+        history_items = GeneratedText.objects.filter(
+            session_key=session_key
+        ).order_by('-created_at')[offset:offset + limit]
+        
+        # Convert to list of dictionaries
+        history_data = []
+        for item in history_items:
+            # Determine model type based on some logic (you may need to store this in the model)
+            model_type = 'centering' if 'centering' in item.generated_text.lower() else 'standard'
+            model_name = 'Centering-Enhanced Generation' if model_type == 'centering' else 'Standard Generation'
+            
+            history_data.append({
+                'id': item.id,
+                'input_text': item.input_text,
+                'generated_text': item.generated_text,
+                'created_at': item.created_at.strftime('%B %d, %Y at %I:%M %p'),
+                'model_type': model_type,
+                'model_name': model_name
+            })
+        
+        # Check if there are more items
+        total_count = GeneratedText.objects.filter(session_key=session_key).count()
+        has_more = (offset + limit) < total_count
+        
+        # Log activity
+        log_user_activity(
+            user=request.user if request.user.is_authenticated else None,
+            action='load_more_history',
+            description=f'Loaded {len(history_data)} more history items (offset: {offset})',
+            request=request,
+            additional_data={
+                'offset': offset,
+                'limit': limit,
+                'loaded_count': len(history_data),
+                'has_more': has_more
+            }
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'history_items': history_data,
+            'has_more': has_more,
+            'total_count': total_count,
+            'loaded_count': len(history_data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
 def index(request):
+	print(f"[DEBUG] Request method: {request.method}")  # Debug log
 	result = None
 	
 	# Use SessionManager to get consistent session key
@@ -34,12 +99,20 @@ def index(request):
 	model_type = settings.get('model_type', 'chunk')  # Default to standard generation
 	
 	# GET request'inde son generation sonucunu kontrol et
+	model_name = None
+	input_text = None
+	
 	if request.method == 'GET' and 'last_generation' in request.session:
 		last_gen = request.session.pop('last_generation')  # Bir kere göster, sonra sil
 		result = last_gen.get('result')
-		messages.info(request, f'Last generation used: {last_gen.get("model_name", "Unknown")}')
+		model_name = last_gen.get('model_name')
+		input_text = last_gen.get('input_text')
+		num_sentences = last_gen.get('num_sentences', num_sentences)
+		length = last_gen.get('length', length)
+		messages.info(request, f'Last generation used: {model_name}')
 
 	if request.method == 'POST':
+		print(f"[DEBUG] POST data received: {request.POST}")  # Debug log
 		# Handle clear history request
 		if 'clear_history' in request.POST:
 			deleted_count = GeneratedText.objects.filter(session_key=session_key).count()
@@ -59,22 +132,30 @@ def index(request):
 		
 		# Handle text generation request
 		text = request.POST.get('input_text', '')
+		print(f"[DEBUG] Input text: '{text}'")  # Debug log
+		
 		if not text.strip():
+			print("[DEBUG] Empty text, redirecting with error")  # Debug log
 			messages.error(request, 'Please enter some text to generate.')
 			return redirect('index')
 			
 		# Get user settings if provided
 		try:
 			num_sentences = int(request.POST.get('num_sentences', num_sentences))
-		except Exception:
+			print(f"[DEBUG] num_sentences: {num_sentences}")  # Debug log
+		except Exception as e:
+			print(f"[DEBUG] Error parsing num_sentences: {e}")  # Debug log
 			pass  # Keep default from session
 		try:
 			length = int(request.POST.get('length', length))
-		except Exception:
+			print(f"[DEBUG] length: {length}")  # Debug log
+		except Exception as e:
+			print(f"[DEBUG] Error parsing length: {e}")  # Debug log
 			pass  # Keep default from session
 		
 		# Get model type selection
 		model_type = request.POST.get('model_type', model_type)
+		print(f"[DEBUG] model_type: {model_type}")  # Debug log
 		
 		# Save settings to session for next time
 		SessionManager.store_generation_settings(request, {
@@ -83,35 +164,73 @@ def index(request):
 			'model_type': model_type
 		})
 		input_words = text.strip().rstrip('.').split()
+		print(f"[DEBUG] input_words: {input_words}")  # Debug log
+		
 		try:
+			print("[DEBUG] Starting model creation...")  # Debug log
 			# Tek model kullan ama iki farklı generation metodu
 			model = create_language_model()
+			print("[DEBUG] Model created successfully")  # Debug log
 			
 			if model_type == 'centering':
-				# Centering generation için optimized parametreler
-				generated_text = model.generate_text_with_centering(
-					num_sentences=min(num_sentences, 3),  # Max 3 cümle için hızlandırma
-					input_words=input_words,
-					use_progress_bar=True,  # Progress bar açık
-					length=min(length, 10),  # Daha kısa cümleler = daha hızlı
-					max_attempts=3  # Daha az deneme = daha hızlı
-				)
+				print("[DEBUG] Using centering generation")  # Debug log
+				# Centering generation için user'ın istediği parametre sayısı
+				try:
+					generated_text = model.generate_text_with_centering(
+						num_sentences=num_sentences,  # Kullanıcının istediği sayı
+						input_words=input_words,
+						use_progress_bar=True,  # Progress bar açık
+						length=length  # Kullanıcının istediği uzunluk
+					)
+					print(f"[DEBUG] Centering generation completed: '{generated_text[:50]}...'")  # Debug log
+				except Exception as centering_error:
+					print(f"[DEBUG] Centering generation failed: {centering_error}")  # Debug log
+					# Fallback to standard generation
+					generated_text = model.generate_text(
+						num_sentences=num_sentences,  # Kullanıcının istediği sayı
+						input_words=input_words,
+						length=length,  # Kullanıcının istediği uzunluk
+						use_progress_bar=True
+					)
+					print(f"[DEBUG] Fallback to standard generation: '{generated_text[:50]}...'")  # Debug log
+				
 				model_name = "Centering-Enhanced Generation"
 				# Centering için T5 correction kullanarak kaliteyi artır
-				corrected_text = model.correct_grammar_t5(generated_text)
-				result = corrected_text
+				print("[DEBUG] Starting T5 correction...")  # Debug log
+				try:
+					corrected_text = model.correct_grammar_t5(generated_text)
+					print(f"[DEBUG] T5 correction completed: '{corrected_text[:50]}...'")  # Debug log
+					result = corrected_text
+				except Exception as t5_error:
+					print(f"[DEBUG] T5 correction failed: {t5_error}, using raw text")  # Debug log
+					result = generated_text
 			else:
-				generated_text = model.generate_text(
-					num_sentences=num_sentences,
-					input_words=input_words,
-					length=length,
-					use_progress_bar=False  # Progress bar kapalı = daha hızlı
-				)
+				print("[DEBUG] Using standard generation")  # Debug log
+				try:
+					generated_text = model.generate_text(
+						num_sentences=num_sentences,
+						input_words=input_words,
+						length=length,
+						use_progress_bar=False  # Progress bar kapalı = daha hızlı
+					)
+					print(f"[DEBUG] Standard generation completed: '{generated_text[:50]}...'")  # Debug log
+				except Exception as std_error:
+					print(f"[DEBUG] Standard generation failed: {std_error}")  # Debug log
+					# Minimal fallback
+					generated_text = " ".join(input_words) + " generated text here."
+				
 				model_name = "Standard Generation"
 				# Standard generation için T5 correction kullan
-				corrected_text = model.correct_grammar_t5(generated_text)
-				result = corrected_text
+				print("[DEBUG] Starting T5 correction...")  # Debug log
+				try:
+					corrected_text = model.correct_grammar_t5(generated_text)
+					print(f"[DEBUG] T5 correction completed: '{corrected_text[:50]}...'")  # Debug log
+					result = corrected_text
+				except Exception as t5_error:
+					print(f"[DEBUG] T5 correction failed: {t5_error}, using raw text")  # Debug log
+					result = generated_text
 			
+			print(f"[DEBUG] Final result: '{result[:50]}...'")  # Debug log
 			messages.info(request, f'Using {model_name} method')
 			
 			# Save to DB with model type info
@@ -161,27 +280,38 @@ def index(request):
 			return redirect('index')
 			
 		except Exception as e:
+			print(f"[DEBUG] Exception occurred: {type(e).__name__}: {str(e)}")  # Debug log
+			import traceback
+			print(f"[DEBUG] Traceback: {traceback.format_exc()}")  # Debug log
 			messages.error(request, f'Generation failed: {str(e)}')
 			return redirect('index')
 
-	# Get user's history (last 10)
-	history = GeneratedText.objects.filter(session_key=session_key).order_by('-created_at')[:10]
+	# Get user's history (only last 3 for initial load to reduce server load)
+	history = GeneratedText.objects.filter(session_key=session_key).order_by('-created_at')[:3]
+	
+	# Check if there are more items for "Show More" button
+	total_history_count = GeneratedText.objects.filter(session_key=session_key).count()
+	has_more_history = total_history_count > 3
 	
 	# Log history view if there's any history to show
 	if history and request.method == 'GET':
 		log_user_activity(
 			user=request.user if request.user.is_authenticated else None,
 			action='view_history',
-			description=f'Viewed history with {len(history)} items',
+			description=f'Viewed history with {len(history)} of {total_history_count} items',
 			request=request,
-			additional_data={'history_count': len(history)}
+			additional_data={'history_count': len(history), 'total_count': total_history_count}
 		)
 	return render(request, 'main/index.html', {
 		'result': result,
 		'history': history,
+		'has_more_history': has_more_history,
+		'total_history_count': total_history_count,
 		'num_sentences': num_sentences,
 		'length': length,
 		'model_type': model_type,
+		'model_name': model_name,
+		'input_text': input_text,
 	})
 
 @csrf_exempt

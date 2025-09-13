@@ -2,10 +2,10 @@
 
 {% block Generator %}
     {% if user.is_authenticated %}
-        <form method="POST" id="textForm" onsubmit="return submitForm()">
+        <form method="POST" id="textForm" onsubmit="return submitForm()" action="{% url 'index' %}">
             {% csrf_token %}
             <div class="mb-3">
-                <textarea class="form-control" name="input_text" id="input_text" rows="2" placeholder="Enter a starting sentence for statistical text generation (processing may take several minutes)...">{{ request.POST.input_text }}</textarea>
+                <textarea class="form-control" name="input_text" id="input_text" rows="2" placeholder="Enter a starting sentence for statistical text generation (processing may take several minutes)..." required>{{ request.POST.input_text }}</textarea>
             </div>
             
             <div class="row mb-2">
@@ -50,15 +50,25 @@
             </div>
             
             <div class="text-center">
-                <button type="submit" name="submit" value="submit" class="btn btn-primary" id="submitBtn">Generate Text</button>
+                <button type="submit" name="submit" value="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="fas fa-magic me-2"></i>Generate Text
+                </button>
             </div>
         </form>
 
-        <div class="loading" id="loading">
-            <div class="spinner-border spinner-border-sm" role="status">
-                <span class="visually-hidden">Generating...</span>
+        <div class="loading" id="loading" style="display: none;">
+            <div class="d-flex justify-content-center align-items-center mb-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Generating...</span>
+                </div>
             </div>
-            <p>Generating text, please wait...</p>
+            <p class="text-center mb-0">
+                <i class="fas fa-cogs me-2"></i>
+                <strong>Generating text, please wait...</strong>
+            </p>
+            <small class="text-muted d-block text-center mt-2">
+                This process may take a few minutes depending on your settings
+            </small>
         </div>
     {% else %}
         <div class="alert alert-info text-center">
@@ -80,13 +90,46 @@
 {% block output %}
     {% if result %}
         <div class="result-box">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <strong>Generated Text:</strong>
-                <button type="button" class="btn btn-primary btn-sm" onclick="copyText('{{ result|escapejs }}', this)">📋 Copy</button>
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h5 class="mb-1">
+                        <i class="fas fa-magic text-primary me-2"></i>Generated Text
+                    </h5>
+                    {% if model_name %}
+                        <span class="badge bg-primary me-2">{{ model_name }}</span>
+                    {% endif %}
+                    <span class="badge bg-secondary">{{ num_sentences }} sentences</span>
+                    <span class="badge bg-info">{{ length }} words max</span>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" onclick="copyText('{{ result|escapejs }}', this)">
+                    <i class="fas fa-copy me-1"></i>Copy
+                </button>
             </div>
-            <p><strong>Input:</strong> {{ request.POST.input_text }}</p>
-            <p><strong>Output:</strong> {{ result }}</p>
-            <small class="text-muted">Parameters: {{ request.POST.num_sentences|default:5 }} sentences, {{ request.POST.length|default:13 }} word length</small>
+            
+            <div class="mb-3">
+                <h6 class="text-muted mb-2">
+                    <i class="fas fa-keyboard me-1"></i>Input Text:
+                </h6>
+                <div class="input-display p-2 bg-light rounded">
+                    {{ input_text|default:"No input provided" }}
+                </div>
+            </div>
+            
+            <div class="mb-2">
+                <h6 class="text-muted mb-2">
+                    <i class="fas fa-robot me-1"></i>Generated Output:
+                </h6>
+                <div class="output-display p-3 bg-white rounded border">
+                    {{ result }}
+                </div>
+            </div>
+            
+            <div class="text-end">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Generated with {{ num_sentences }} sentences, max {{ length }} words per sentence
+                </small>
+            </div>
         </div>
     {% endif %}
 {% endblock %}
@@ -94,31 +137,96 @@
 {% block History %}
     {% if user.is_authenticated %}
         {% if history %}
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6>Generation History ({{ history|length }} items)</h6>
-                <button type="button" class="btn btn-danger btn-sm" onclick="clearHistory()">🗑️ Clear</button>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-1">
+                        <i class="fas fa-history text-info me-2"></i>Generation History
+                    </h5>
+                    <span class="badge bg-info">{{ history|length }} items</span>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" onclick="clearHistory()">
+                    <i class="fas fa-trash me-1"></i>Clear All
+                </button>
             </div>
 
             {% for item in history %}
                 <div class="history-item">
-                    <div class="d-flex justify-content-between align-items-start mb-1">
-                        <small><strong>Date:</strong> {{ item.created_at|date:"M d, Y H:i" }}</small>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="copyText('{{ item.generated_text|escapejs }}', this)">📋</button>
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h6 class="mb-1">
+                                <i class="fas fa-file-text text-primary me-2"></i>Generation #{{ forloop.revcounter }}
+                            </h6>
+                            <span class="badge bg-secondary me-2">{{ item.created_at|date:"M d, H:i" }}</span>
+                            <span class="badge bg-success">Completed</span>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="copyText('{{ item.generated_text|escapejs }}', this)">
+                            <i class="fas fa-copy me-1"></i>Copy
+                        </button>
                     </div>
-                    <p><strong>Input:</strong> {{ item.input_text }}</p>
-                    <p><strong>Output:</strong> {{ item.generated_text }}</p>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-keyboard me-1"></i>Input Text:
+                        </h6>
+                        <div class="input-display p-2 bg-light rounded">
+                            {{ item.input_text|default:"No input provided" }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-robot me-1"></i>Generated Output:
+                        </h6>
+                        <div class="output-display p-3 bg-white rounded border">
+                            {{ item.generated_text }}
+                        </div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            Generated on {{ item.created_at|date:"F d, Y \a\t H:i" }}
+                        </small>
+                    </div>
                 </div>
             {% endfor %}
+            
+            <!-- Show More Button -->
+            {% if has_more_history %}
+                <div class="text-center mt-4" id="show-more-container">
+                    <button type="button" class="btn btn-outline-primary" id="show-more-btn" onclick="loadMoreHistory()">
+                        <i class="fas fa-plus-circle me-2"></i>Show More History 
+                        <span class="badge bg-primary ms-2">{{ total_history_count|add:"-3" }} more</span>
+                    </button>
+                    <div class="spinner-border spinner-border-sm text-primary ms-2 d-none" id="load-more-spinner"></div>
+                </div>
+            {% endif %}
         {% else %}
-            <div class="text-center py-4">
-                <h6 class="text-muted">No text generated yet</h6>
-                <p class="text-muted">Start generating text from the Generate tab. Please allow sufficient time for the statistical model to process your request.</p>
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-history text-muted" style="font-size: 3rem;"></i>
+                </div>
+                <h5 class="text-muted mb-3">No Text Generated Yet</h5>
+                <p class="text-muted mb-4">
+                    Start generating text from the Generate tab to see your history here.<br>
+                    <small>Please allow sufficient time for the statistical model to process your request.</small>
+                </p>
+                <a href="#Generator" onclick="openTab(event, 'Generator')" class="btn btn-primary">
+                    <i class="fas fa-magic me-2"></i>Generate Your First Text
+                </a>
             </div>
         {% endif %}
     {% else %}
-        <div class="alert alert-warning text-center">
-            <h5><i class="fas fa-history me-2"></i>Generation History</h5>
-            <p>Please sign in to view your text generation history and track your experiments with the statistical language model.</p>
+        <div class="alert alert-info text-center border-0 shadow-sm">
+            <div class="mb-3">
+                <i class="fas fa-history text-info" style="font-size: 2.5rem;"></i>
+            </div>
+            <h5 class="text-info mb-3">
+                <i class="fas fa-lock me-2"></i>Generation History
+            </h5>
+            <p class="mb-4">
+                Please sign in to view your text generation history and track your experiments with the statistical language model.
+            </p>
             <div class="mt-3">
                 <a href="{% url 'login' %}" class="btn btn-primary me-2">
                     <i class="fas fa-sign-in-alt me-2"></i>Sign In

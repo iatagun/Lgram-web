@@ -21,7 +21,7 @@ from django.conf.urls.static import static
 from main.views import (
     index, transition_analysis, coherence_report, 
     login_view, register_view, logout_view, session_info_view,
-    profile_view, settings_view, export_data_view
+    profile_view, settings_view, export_data_view, load_more_history
 )
 
 urlpatterns = [
@@ -36,6 +36,7 @@ urlpatterns = [
     path('profile/', profile_view, name='profile'),
     path('settings/', settings_view, name='settings'),
     path('export-data/', export_data_view, name='export_data'),
+    path('api/load-more-history/', load_more_history, name='load_more_history'),
 ]
 
 if settings.DEBUG:

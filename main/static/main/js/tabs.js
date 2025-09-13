@@ -59,6 +59,118 @@ function updateSliderValue(elementId, value) {
     document.getElementById(elementId).textContent = value;
 }
 
+// Load more history items via AJAX
+let historyOffset = 3; // Start after initial 3 items
+
+function loadMoreHistory() {
+    const btn = document.getElementById('show-more-btn');
+    const spinner = document.getElementById('load-more-spinner');
+    const container = document.getElementById('show-more-container');
+    
+    // Show loading state
+    btn.disabled = true;
+    spinner.classList.remove('d-none');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+    
+    // Make AJAX request
+    fetch(`/api/load-more-history/?offset=${historyOffset}&limit=5`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add new history items
+                data.history_items.forEach(item => {
+                    const historyItem = createHistoryItemElement(item);
+                    container.parentNode.insertBefore(historyItem, container);
+                });
+                
+                historyOffset += data.loaded_count;
+                
+                // Update or hide the "Show More" button
+                if (data.has_more) {
+                    const remaining = data.total_count - historyOffset;
+                    btn.innerHTML = `<i class="fas fa-plus-circle me-2"></i>Show More History <span class="badge bg-primary ms-2">${remaining} more</span>`;
+                    btn.disabled = false;
+                } else {
+                    container.style.display = 'none';
+                }
+                
+                // Add animation to new items
+                const newItems = container.parentNode.querySelectorAll('.history-item:not(.animated)');
+                newItems.forEach((item, index) => {
+                    item.classList.add('animated');
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        item.style.transition = 'all 0.4s ease-out';
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+                
+                showAlert(`Loaded ${data.loaded_count} more history items`, 'success');
+            } else {
+                showAlert('Failed to load more history: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading more history:', error);
+            showAlert('Failed to load more history', 'danger');
+            btn.innerHTML = '<i class="fas fa-plus-circle me-2"></i>Show More History';
+            btn.disabled = false;
+        })
+        .finally(() => {
+            spinner.classList.add('d-none');
+        });
+}
+
+function createHistoryItemElement(item) {
+    const div = document.createElement('div');
+    div.className = 'history-item mb-3';
+    
+    // Determine model badge class
+    const badgeClass = item.model_type === 'centering' ? 'bg-info' : 'bg-secondary';
+    
+    div.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex gap-2">
+                <span class="badge ${badgeClass}">${item.model_name}</span>
+                <span class="badge bg-success">Completed</span>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="copyText('${item.generated_text.replace(/'/g, "\\'")}', this)">
+                <i class="fas fa-copy me-1"></i>Copy
+            </button>
+        </div>
+        
+        <div class="mb-3">
+            <h6 class="text-muted mb-2">
+                <i class="fas fa-keyboard me-1"></i>Input Text:
+            </h6>
+            <div class="input-display p-2 bg-light rounded">
+                ${item.input_text || "No input provided"}
+            </div>
+        </div>
+        
+        <div class="mb-2">
+            <h6 class="text-muted mb-2">
+                <i class="fas fa-robot me-1"></i>Generated Output:
+            </h6>
+            <div class="output-display p-3 bg-white rounded border">
+                ${item.generated_text}
+            </div>
+        </div>
+        
+        <div class="text-end">
+            <small class="text-muted">
+                <i class="fas fa-clock me-1"></i>
+                Generated on ${item.created_at}
+            </small>
+        </div>
+    `;
+    
+    return div;
+}
+
 // Initialize tabs when DOM is loaded
 document.addEventListener("DOMContentLoaded", function() {
     // Click the default tab
@@ -73,31 +185,48 @@ document.addEventListener("DOMContentLoaded", function() {
 
 // Form validation and submission
 function submitForm() {
+    console.log('submitForm() called'); // Debug log
+    
     const input = document.getElementById('input_text');
     const submitBtn = document.getElementById('submitBtn');
     const loading = document.getElementById('loading');
     
-    // Validate input
-    if (!input.value.trim()) {
+    console.log('Input value:', input ? input.value : 'Input element not found'); // Debug log
+    
+    // Validate input - more flexible validation
+    if (!input || !input.value.trim()) {
+        console.log('Validation failed: Empty input'); // Debug log
         showAlert('Please enter some text.', 'warning');
+        if (input) input.focus();
+        return false;
+    }
+    
+    // Minimum 2 characters should be enough
+    if (input.value.trim().length < 2) {
+        console.log('Validation failed: Text too short'); // Debug log
+        showAlert('Please enter at least 2 characters.', 'warning');
         input.focus();
         return false;
     }
     
-    if (input.value.trim().length < 5) {
-        showAlert('Please enter at least 5 characters.', 'warning');
-        input.focus();
-        return false;
+    console.log('Validation passed, submitting form'); // Debug log
+    
+    // Show loading state - only in one place
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
     }
     
-    // Show loading state
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Generating...';
-    loading.style.display = 'block';
+    if (loading) {
+        loading.style.display = 'block';
+    }
     
     // Add visual feedback
-    input.style.borderColor = '#28a745';
+    if (input) {
+        input.style.borderColor = '#28a745';
+    }
     
+    console.log('Form submitted successfully'); // Debug log
     return true;
 }
 
@@ -218,7 +347,7 @@ function initFormValidation() {
                 textarea.parentNode.appendChild(counter);
             }
             
-            counter.textContent = `${count}/${maxLength} karakter`;
+            counter.textContent = `${count}/${maxLength} characters`;
             
             // Color coding
             if (count > maxLength * 0.9) {
