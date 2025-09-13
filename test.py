@@ -1,5 +1,21 @@
-from lgram.models.analyze_transitions import analyze_transitions
+# Use the updated models directly from models folder
+from lgram.models.simple_language_model import create_language_model
+model = create_language_model()
+# Generate text using centering theory
+input_sentence = "The truth "
+input_words = input_sentence.strip().rstrip('.').split()
 
-text = "Least of all do they thus dispose of the murdered. Guardsman take small farmer well who loathe every precaution the officer."
-df = analyze_transitions(text)
-print(df)
+print("Testing generate_text_with_centering function...")
+print(f"Input: {input_sentence}")
+print("="*50)
+
+generated_text = model.generate_text_with_centering(
+    num_sentences=5,
+    input_words=input_words,
+    length=13,
+    use_progress_bar=True
+)
+
+print("\nGenerated Text with Centering:")
+print(generated_text)
+print("="*50)

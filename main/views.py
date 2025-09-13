@@ -88,20 +88,24 @@ def index(request):
 			model = create_language_model()
 			
 			if model_type == 'centering':
+				# Centering generation için optimized parametreler
 				generated_text = model.generate_text_with_centering(
-					num_sentences=num_sentences,
+					num_sentences=min(num_sentences, 3),  # Max 3 cümle için hızlandırma
 					input_words=input_words,
-					length=length
+					use_progress_bar=True,  # Progress bar açık
+					length=min(length, 10),  # Daha kısa cümleler = daha hızlı
+					max_attempts=3  # Daha az deneme = daha hızlı
 				)
 				model_name = "Centering-Enhanced Generation"
-				# Centering için T5 correction kullanma - ham output
-				result = generated_text
+				# Centering için T5 correction kullanarak kaliteyi artır
+				corrected_text = model.correct_grammar_t5(generated_text)
+				result = corrected_text
 			else:
 				generated_text = model.generate_text(
 					num_sentences=num_sentences,
 					input_words=input_words,
 					length=length,
-					use_progress_bar=True
+					use_progress_bar=False  # Progress bar kapalı = daha hızlı
 				)
 				model_name = "Standard Generation"
 				# Standard generation için T5 correction kullan
