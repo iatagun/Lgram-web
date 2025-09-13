@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth import update_session_auth_hash
-from django.utils import timezone
+from django.utils import timezone, translation
 from datetime import timedelta
 import json
 
@@ -19,6 +19,37 @@ from .utils import (
     log_text_generation, get_client_ip
 )
 from .session_manager import SessionManager
+
+@csrf_exempt
+def switch_language(request):
+    """Switch interface language"""
+    if request.method == 'POST':
+        language = request.POST.get('language', 'en')
+        
+        # Validate language
+        if language not in ['en', 'tr']:
+            language = 'en'
+        
+        # Activate the language
+        translation.activate(language)
+        request.session[translation.LANGUAGE_SESSION_KEY] = language
+        
+        # Log language switch
+        log_user_activity(
+            user=request.user if request.user.is_authenticated else None,
+            action='switch_language',
+            description=f'Switched interface language to {language}',
+            request=request,
+            additional_data={'new_language': language}
+        )
+        
+        return JsonResponse({
+            'success': True, 
+            'language': language,
+            'message': 'Language switched successfully'
+        })
+    
+    return JsonResponse({'error': 'Only POST requests allowed'}, status=405)
 
 @csrf_exempt
 def load_more_history(request):

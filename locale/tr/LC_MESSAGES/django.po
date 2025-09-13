@@ -1,0 +1,146 @@
+# Turkish translations for Django project.
+# Copyright (C) 2025
+# This file is distributed under the same license as the Django project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-13 12:00+0000\n"
+"PO-Revision-Date: 2025-09-13 12:00+0000\n"
+"Last-Translator: Auto\n"
+"Language-Team: Turkish\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Settings"
+msgstr "Ayarlar"
+
+msgid "Session Info"
+msgstr "Oturum Bilgisi"
+
+msgid "Logout"
+msgstr "Çıkış"
+
+msgid "Login"
+msgstr "Giriş"
+
+msgid "Register"
+msgstr "Kayıt Ol"
+
+msgid "Statistical Language Model with Centering Theory"
+msgstr "Merkezleme Teorili İstatistiksel Dil Modeli"
+
+msgid "An educational demonstration of statistical N-gram language models combined with Centering Theory for coherent text generation."
+msgstr "Tutarlı metin üretimi için Merkezleme Teorisi ile birleştirilmiş istatistiksel N-gram dil modellerinin eğitsel bir gösterimi."
+
+msgid "This project showcases traditional statistical NLP techniques for educational purposes. Please note that text generation may take considerable time due to computational complexity, and results may vary in quality as this is a research prototype."
+msgstr "Bu proje eğitim amaçları için geleneksel istatistiksel NLP tekniklerini sergiler. Hesaplamalı karmaşıklık nedeniyle metin üretiminin önemli zaman alabileceğini ve bu bir araştırma prototipi olduğu için sonuçların kalitesinin değişebileceğini lütfen unutmayın."
+
+msgid "Generate"
+msgstr "Üret"
+
+msgid "Enter a starting sentence for statistical text generation (processing may take several minutes)..."
+msgstr "İstatistiksel metin üretimi için başlangıç cümlesi girin (işlem birkaç dakika sürebilir)..."
+
+msgid "Sentences"
+msgstr "Cümleler"
+
+msgid "Length"
+msgstr "Uzunluk"
+
+msgid "Model Type"
+msgstr "Model Türü"
+
+msgid "Standard Generation"
+msgstr "Standart Üretim"
+
+msgid "Centering-Enhanced Generation"
+msgstr "Merkezleme-Gelişmiş Üretim"
+
+msgid "Generate Text"
+msgstr "Metin Üret"
+
+msgid "History"
+msgstr "Geçmiş"
+
+msgid "Clear History"
+msgstr "Geçmişi Temizle"
+
+msgid "Show More History"
+msgstr "Daha Fazla Geçmiş Göster"
+
+msgid "No Text Generated Yet"
+msgstr "Henüz Metin Üretilmedi"
+
+msgid "Start generating text from the Generate tab to see your history here."
+msgstr "Geçmişinizi burada görmek için Üret sekmesinden metin üretmeye başlayın."
+
+msgid "Please allow sufficient time for the statistical model to process your request."
+msgstr "İstatistiksel modelin isteğinizi işlemesi için lütfen yeterli zaman tanıyın."
+
+msgid "Generate Your First Text"
+msgstr "İlk Metninizi Üretin"
+
+msgid "Generation History"
+msgstr "Üretim Geçmişi"
+
+msgid "Please sign in to view your text generation history and track your experiments with the statistical language model."
+msgstr "Metin üretim geçmişinizi görüntülemek ve istatistiksel dil modeli ile deneyimlerinizi takip etmek için lütfen oturum açın."
+
+msgid "Input Text"
+msgstr "Giriş Metni"
+
+msgid "Generated Output"
+msgstr "Üretilen Çıktı"
+
+msgid "Copy"
+msgstr "Kopyala"
+
+msgid "Completed"
+msgstr "Tamamlandı"
+
+msgid "more"
+msgstr "daha fazla"
+
+msgid "Loading..."
+msgstr "Yükleniyor..."
+
+msgid "Generating..."
+msgstr "Üretiliyor..."
+
+msgid "Text copied!"
+msgstr "Metin kopyalandı!"
+
+msgid "Copy failed!"
+msgstr "Kopyalama başarısız!"
+
+msgid "Please enter some text."
+msgstr "Lütfen bir metin girin."
+
+msgid "Please enter at least 2 characters."
+msgstr "Lütfen en az 2 karakter girin."
+
+msgid "Text generated successfully!"
+msgstr "Metin başarıyla üretildi!"
+
+msgid "Generation failed"
+msgstr "Üretim başarısız"
+
+msgid "History cleared successfully!"
+msgstr "Geçmiş başarıyla temizlendi!"
+
+msgid "Are you sure you want to delete all history?"
+msgstr "Tüm geçmişi silmek istediğinizden emin misiniz?"
+
+msgid "This action cannot be undone."
+msgstr "Bu işlem geri alınamaz."
+
+msgid "Deleting..."
+msgstr "Siliniyor..."

@@ -12,13 +12,13 @@
                 <div class="col-6">
                     <div class="slider-group-compact">
                         <div class="slider-label-compact">
-                            <span>Sentences:</span>
+                            <span id="sentences-label">Sentences:</span>
                             <span class="slider-value-compact" id="sentencesValue">{{ num_sentences|default:5 }}</span>
                         </div>
                         <input type="range" class="form-range-compact" name="num_sentences" id="num_sentences" value="{{ num_sentences|default:5 }}" min="1" max="10" oninput="updateSliderValue('sentencesValue', this.value)">
                         
                         <div class="slider-label-compact mt-2">
-                            <span>Length:</span>
+                            <span id="length-label">Length:</span>
                             <span class="slider-value-compact" id="lengthValue">{{ length|default:13 }}</span>
                         </div>
                         <input type="range" class="form-range-compact" name="length" id="length" value="{{ length|default:13 }}" min="5" max="30" oninput="updateSliderValue('lengthValue', this.value)">

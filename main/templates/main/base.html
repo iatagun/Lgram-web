@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="{{ LANGUAGE_CODE }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,25 +22,25 @@
                             <i class="fas fa-user me-2"></i>{{ user.username }}
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/profile/"><i class="fas fa-user me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="/settings/"><i class="fas fa-cog me-2"></i>Settings</a></li>
-                            <li><a class="dropdown-item" href="/session-info/"><i class="fas fa-info-circle me-2"></i>Session Info</a></li>
+                            <li><a class="dropdown-item" href="/profile/"><i class="fas fa-user me-2"></i><span id="menu-profile">Profile</span></a></li>
+                            <li><a class="dropdown-item" href="/settings/"><i class="fas fa-cog me-2"></i><span id="menu-settings">Settings</span></a></li>
+                            <li><a class="dropdown-item" href="/session-info/"><i class="fas fa-info-circle me-2"></i><span id="menu-session">Session Info</span></a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i><span id="menu-logout">Logout</span></a></li>
                         </ul>
                     </div>
                 {% else %}
                     <a href="{% url 'login' %}" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                        <i class="fas fa-sign-in-alt me-2"></i><span id="btn-login">Login</span>
                     </a>
                     <a href="{% url 'register' %}" class="btn btn-primary me-3">
-                        <i class="fas fa-user-plus me-2"></i>Register
+                        <i class="fas fa-user-plus me-2"></i><span id="btn-register">Register</span>
                     </a>
                 {% endif %}
                 
                 <div class="languageswitcher">
-                  <button type="button" class="btn btn-primary btn-sm" onclick="location.href='https://dizge.pythonanywhere.com/'">EN</button>
-                  <button type="button" class="btn btn-light btn-sm" onclick="location.href='https://dizge.pythonanywhere.com/tr'">TR</button>
+                  <button type="button" class="btn btn-primary btn-sm" id="lang-en" onclick="switchLanguage('en')">EN</button>
+                  <button type="button" class="btn btn-light btn-sm" id="lang-tr" onclick="switchLanguage('tr')">TR</button>
                 </div>
             </div>
             </div>
@@ -48,17 +48,17 @@
 
         <div class="container">
             <h1 class="text-center" style="font-size: 3.5rem; font-weight: 700; margin-bottom: 1rem;">Centering-<span class="text-primary">Lgram</span></h1>
-            <p class="text-center">Statistical Language Model with Centering Theory</p>
+            <p class="text-center" id="subtitle">Statistical Language Model with Centering Theory</p>
 
             <div class="info-section mb-4">
-                <p class="lead">An educational demonstration of statistical N-gram language models combined with Centering Theory for coherent text generation.</p>
-                <p>This project showcases traditional statistical NLP techniques for educational purposes. Please note that text generation may take considerable time due to computational complexity, and results may vary in quality as this is a research prototype.</p>
+                <p class="lead" id="description1">An educational demonstration of statistical N-gram language models combined with Centering Theory for coherent text generation.</p>
+                <p id="description2">This project showcases traditional statistical NLP techniques for educational purposes. Please note that text generation may take considerable time due to computational complexity, and results may vary in quality as this is a research prototype.</p>
             </div>
 
             <!-- Tab links -->
             <div class="tab">
-                <button class="tablinks" onclick="openTab(event, 'Generator')" id="defaultOpen">Generate</button>
-                <button class="tablinks" onclick="openTab(event, 'History')" id="historyButton">History</button>
+                <button class="tablinks" onclick="openTab(event, 'Generator')" id="defaultOpen"><span id="tab-generate">Generate</span></button>
+                <button class="tablinks" onclick="openTab(event, 'History')" id="historyButton"><span id="tab-history">History</span></button>
                 <button class="tablinks" onclick="openTab(event, 'TransitionAnalysis')" id="transitionButton">Transition Analysis</button>
                 <button class="tablinks" onclick="openTab(event, 'CoherenceReport')" id="coherenceButton">Coherence Report</button>
             </div>

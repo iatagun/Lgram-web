@@ -59,6 +59,241 @@ function updateSliderValue(elementId, value) {
     document.getElementById(elementId).textContent = value;
 }
 
+// Switch language function
+function switchLanguage(language) {
+    // Show loading state on buttons
+    const enBtn = document.getElementById('lang-en');
+    const trBtn = document.getElementById('lang-tr');
+    
+    // Reset buttons
+    enBtn.className = 'btn btn-light btn-sm';
+    trBtn.className = 'btn btn-light btn-sm';
+    
+    // Highlight active language
+    if (language === 'en') {
+        enBtn.className = 'btn btn-primary btn-sm';
+        enBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>EN';
+    } else {
+        trBtn.className = 'btn btn-primary btn-sm';
+        trBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>TR';
+    }
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Make AJAX request
+    fetch('/api/switch-language/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: `language=${language}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Store language preference
+            localStorage.setItem('preferred_language', language);
+            
+            // Show success message
+            showAlert(getLocalizedMessage('language_switched', language), 'success');
+            
+            // Reload page to apply translations
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } else {
+            showAlert(getLocalizedMessage('language_switch_failed', language), 'danger');
+            // Reset buttons on error
+            resetLanguageButtons();
+        }
+    })
+    .catch(error => {
+        console.error('Language switch error:', error);
+        showAlert(getLocalizedMessage('language_switch_error', language), 'danger');
+        resetLanguageButtons();
+    });
+}
+
+function resetLanguageButtons() {
+    const enBtn = document.getElementById('lang-en');
+    const trBtn = document.getElementById('lang-tr');
+    
+    enBtn.innerHTML = 'EN';
+    trBtn.innerHTML = 'TR';
+    
+    // Set active button based on current language
+    const currentLang = document.documentElement.lang || 'en';
+    if (currentLang.startsWith('en')) {
+        enBtn.className = 'btn btn-primary btn-sm';
+        trBtn.className = 'btn btn-light btn-sm';
+    } else {
+        enBtn.className = 'btn btn-light btn-sm';
+        trBtn.className = 'btn btn-primary btn-sm';
+    }
+}
+
+function getLocalizedMessage(key, language) {
+    const messages = {
+        'language_switched': {
+            'en': 'Language switched to English',
+            'tr': 'Dil Türkçe\'ye değiştirildi'
+        },
+        'language_switch_failed': {
+            'en': 'Failed to switch language',
+            'tr': 'Dil değiştirme başarısız'
+        },
+        'language_switch_error': {
+            'en': 'Error switching language',
+            'tr': 'Dil değiştirme hatası'
+        }
+    };
+    
+    return messages[key] && messages[key][language] ? messages[key][language] : messages[key]['en'];
+}
+
+// Set active language button on page load
+document.addEventListener('DOMContentLoaded', function() {
+    resetLanguageButtons();
+});
+
+// Language switching functionality
+const translations = {
+    'tr': {
+        'Profile': 'Profil',
+        'Settings': 'Ayarlar',
+        'Session Info': 'Oturum Bilgisi',
+        'Logout': 'Çıkış',
+        'Login': 'Giriş',
+        'Register': 'Kayıt Ol',
+        'Statistical Language Model with Centering Theory': 'Merkezleme Teorili İstatistiksel Dil Modeli',
+        'An educational demonstration of statistical N-gram language models combined with Centering Theory for coherent text generation.': 'Tutarlı metin üretimi için Merkezleme Teorisi ile birleştirilmiş istatistiksel N-gram dil modellerinin eğitsel bir gösterimi.',
+        'This project showcases traditional statistical NLP techniques for educational purposes. Please note that text generation may take considerable time due to computational complexity, and results may vary in quality as this is a research prototype.': 'Bu proje eğitim amaçları için geleneksel istatistiksel NLP tekniklerini sergiler. Hesaplamalı karmaşıklık nedeniyle metin üretiminin önemli zaman alabileceğini ve bu bir araştırma prototipi olduğu için sonuçların kalitesinin değişebileceğini lütfen unutmayın.',
+        'Generate': 'Üret',
+        'History': 'Geçmiş',
+        'Enter a starting sentence for statistical text generation (processing may take several minutes)...': 'İstatistiksel metin üretimi için başlangıç cümlesi girin (işlem birkaç dakika sürebilir)...',
+        'Sentences': 'Cümleler',
+        'Length': 'Uzunluk',
+        'Generate Text': 'Metin Üret',
+        'Clear History': 'Geçmişi Temizle',
+        'Show More History': 'Daha Fazla Geçmiş Göster',
+        'Copy': 'Kopyala',
+        'Loading...': 'Yükleniyor...',
+        'Generating...': 'Üretiliyor...',
+    }
+};
+
+function switchLanguage(lang) {
+    const enBtn = document.getElementById('lang-en');
+    const trBtn = document.getElementById('lang-tr');
+    
+    // Update button states
+    if (lang === 'tr') {
+        enBtn.className = 'btn btn-light btn-sm';
+        trBtn.className = 'btn btn-primary btn-sm';
+        translatePageToTurkish();
+    } else {
+        enBtn.className = 'btn btn-primary btn-sm';
+        trBtn.className = 'btn btn-light btn-sm';
+        translatePageToEnglish();
+    }
+    
+    // Save language preference
+    localStorage.setItem('preferred_language', lang);
+    
+    // Make AJAX call to backend
+    fetch('/api/switch-language/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: `language=${lang}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(`Language switched to ${lang.toUpperCase()}`, 'success');
+        }
+    })
+    .catch(error => {
+        console.error('Language switch error:', error);
+    });
+}
+
+function translatePageToTurkish() {
+    // Translate interface elements
+    const elements = {
+        'menu-profile': 'Profil',
+        'menu-settings': 'Ayarlar',
+        'menu-session': 'Oturum Bilgisi',
+        'menu-logout': 'Çıkış',
+        'btn-login': 'Giriş',
+        'btn-register': 'Kayıt Ol',
+        'subtitle': 'Merkezleme Teorili İstatistiksel Dil Modeli',
+        'description1': 'Tutarlı metin üretimi için Merkezleme Teorisi ile birleştirilmiş istatistiksel N-gram dil modellerinin eğitsel bir gösterimi.',
+        'description2': 'Bu proje eğitim amaçları için geleneksel istatistiksel NLP tekniklerini sergiler. Hesaplamalı karmaşıklık nedeniyle metin üretiminin önemli zaman alabileceğini ve bu bir araştırma prototipi olduğu için sonuçların kalitesinin değişebileceğini lütfen unutmayın.',
+        'tab-generate': 'Üret',
+        'tab-history': 'Geçmiş',
+        'sentences-label': 'Cümleler:',
+        'length-label': 'Uzunluk:'
+    };
+    
+    Object.keys(elements).forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = elements[id];
+        }
+    });
+    
+    // Update placeholder
+    const textarea = document.getElementById('input_text');
+    if (textarea) {
+        textarea.placeholder = 'İstatistiksel metin üretimi için başlangıç cümlesi girin (işlem birkaç dakika sürebilir)...';
+    }
+}
+
+function translatePageToEnglish() {
+    // Translate back to English
+    const elements = {
+        'menu-profile': 'Profile',
+        'menu-settings': 'Settings',
+        'menu-session': 'Session Info',
+        'menu-logout': 'Logout',
+        'btn-login': 'Login',
+        'btn-register': 'Register',
+        'subtitle': 'Statistical Language Model with Centering Theory',
+        'description1': 'An educational demonstration of statistical N-gram language models combined with Centering Theory for coherent text generation.',
+        'description2': 'This project showcases traditional statistical NLP techniques for educational purposes. Please note that text generation may take considerable time due to computational complexity, and results may vary in quality as this is a research prototype.',
+        'tab-generate': 'Generate',
+        'tab-history': 'History',
+        'sentences-label': 'Sentences:',
+        'length-label': 'Length:'
+    };
+    
+    Object.keys(elements).forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = elements[id];
+        }
+    });
+    
+    // Update placeholder
+    const textarea = document.getElementById('input_text');
+    if (textarea) {
+        textarea.placeholder = 'Enter a starting sentence for statistical text generation (processing may take several minutes)...';
+    }
+}
+
+// Initialize language on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const savedLang = localStorage.getItem('preferred_language') || 'en';
+    if (savedLang === 'tr') {
+        switchLanguage('tr');
+    }
+});
+
 // Load more history items via AJAX
 let historyOffset = 3; // Start after initial 3 items
 
