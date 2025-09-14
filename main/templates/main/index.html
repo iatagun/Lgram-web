@@ -8,8 +8,9 @@
                 <textarea class="form-control" name="input_text" id="input_text" rows="2" placeholder="Enter a starting sentence for statistical text generation (processing may take several minutes)..." required>{{ request.POST.input_text }}</textarea>
             </div>
             
-            <div class="row mb-2">
-                <div class="col-6">
+            <div class="row mb-3">
+                <!-- Sliders Section - Left Side -->
+                <div class="col-md-4">
                     <div class="slider-group-compact">
                         <div class="slider-label-compact">
                             <span id="sentences-label">Sentences:</span>
@@ -24,26 +25,32 @@
                         <input type="range" class="form-range-compact" name="length" id="length" value="{{ length|default:13 }}" min="5" max="30" oninput="updateSliderValue('lengthValue', this.value)">
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="slider-group-compact">
-                        <div class="slider-label-compact mb-2">
-                            <span><i class="fas fa-cogs me-1"></i>Generation Method:</span>
+                
+                <!-- Generation Methods - Right Side -->
+                <div class="col-md-8">
+                    <div class="slider-label-compact mb-2">
+                        <span><i class="fas fa-cogs me-1"></i>Generation Method:</span>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check-compact mb-2">
+                                <input class="form-check-input" type="radio" name="model_type" id="chunk_model" value="chunk" {% if model_type == 'chunk' or not model_type %}checked{% endif %}>
+                                <label class="form-check-label-compact" for="chunk_model">
+                                    <strong>Standard Generation</strong>
+                                    <small>Traditional N-gram with grammar correction</small>
+                                </label>
+                            </div>
                         </div>
                         
-                        <div class="form-check-compact mb-2">
-                            <input class="form-check-input" type="radio" name="model_type" id="chunk_model" value="chunk" {% if model_type == 'chunk' or not model_type %}checked{% endif %}>
-                            <label class="form-check-label-compact" for="chunk_model">
-                                <strong>Standard Generation</strong>
-                                <small>Traditional N-gram with grammar correction</small>
-                            </label>
-                        </div>
-                        
-                        <div class="form-check-compact">
-                            <input class="form-check-input" type="radio" name="model_type" id="centering_model" value="centering" {% if model_type == 'centering' %}checked{% endif %}>
-                            <label class="form-check-label-compact" for="centering_model">
-                                <strong>Centering-Enhanced</strong>
-                                <small>Improved coherence (raw output)</small>
-                            </label>
+                        <div class="col-md-6">
+                            <div class="form-check-compact mb-2">
+                                <input class="form-check-input" type="radio" name="model_type" id="centering_model" value="centering" {% if model_type == 'centering' %}checked{% endif %}>
+                                <label class="form-check-label-compact" for="centering_model">
+                                    <strong>Centering-Enhanced</strong>
+                                    <small>Improved coherence (raw output)</small>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -100,6 +107,9 @@
                     {% endif %}
                     <span class="badge bg-secondary">{{ num_sentences }} sentences</span>
                     <span class="badge bg-info">{{ length }} words max</span>
+                    {% if lgram_version %}
+                        <span class="badge bg-success">lgram v{{ lgram_version }}</span>
+                    {% endif %}
                 </div>
                 <button type="button" class="btn btn-primary btn-sm" onclick="copyText('{{ result|escapejs }}', this)">
                     <i class="fas fa-copy me-1"></i>Copy

@@ -14,12 +14,26 @@ from datetime import timedelta
 import json
 
 from lgram.models.simple_language_model import create_language_model
+import lgram
 from .models import GeneratedText, UserActivityLog, UserLoginLog
 from .utils import (
     log_user_login, log_user_logout, log_user_activity, 
     log_text_generation, get_client_ip
 )
 from .session_manager import SessionManager
+
+def get_lgram_version():
+    """Get lgram package version"""
+    try:
+        # First try pkg_resources as it's more reliable for installed packages
+        import pkg_resources
+        return pkg_resources.get_distribution('centering-lgram').version
+    except:
+        try:
+            # Fallback to module __version__ attribute
+            return lgram.__version__
+        except AttributeError:
+            return "unknown"
 
 @csrf_exempt
 def switch_language(request):
@@ -262,7 +276,7 @@ def index(request):
 				# Centering için T5 correction kullanarak kaliteyi artır
 				print("[DEBUG] Starting T5 correction...")  # Debug log
 				try:
-					corrected_text = model.correct_grammar_t5(generated_text)
+					corrected_text = model.correct_grammar_t5(generated_text, prompt_style="comprehensive")
 					print(f"[DEBUG] T5 correction completed: '{corrected_text[:50]}...'")  # Debug log
 					result = corrected_text
 				except Exception as t5_error:
@@ -289,7 +303,7 @@ def index(request):
 				# Standard generation için T5 correction kullan
 				print("[DEBUG] Starting T5 correction...")  # Debug log
 				try:
-					corrected_text = model.correct_grammar_t5(generated_text)
+					corrected_text = model.correct_grammar_t5(generated_text, prompt_style="comprehensive")
 					print(f"[DEBUG] T5 correction completed: '{corrected_text[:50]}...'")  # Debug log
 					result = corrected_text
 				except Exception as t5_error:
@@ -388,6 +402,7 @@ def index(request):
 		'model_type': model_type,
 		'model_name': model_name,
 		'input_text': input_text,
+		'lgram_version': get_lgram_version(),
 	})
 
 @csrf_exempt

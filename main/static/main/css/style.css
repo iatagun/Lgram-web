@@ -69,11 +69,14 @@ html {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 2px solid var(--border-color);
     border-radius: var(--border-radius);
-    padding: 12px 16px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
     transition: var(--transition);
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    height: fit-content;
+    min-height: 60px;
 }
 
 .form-check-compact::before {
@@ -124,17 +127,17 @@ html {
 
 .form-check-label-compact strong {
     display: block;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #495057;
     font-weight: 600;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
 }
 
 .form-check-label-compact small {
     display: block;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #6c757d;
-    line-height: 1.2;
+    line-height: 1.1;
 }
 
 .form-check-compact .form-check-input:checked ~ .form-check-label-compact strong {
@@ -677,17 +680,18 @@ h1 {
 
 /* Compact Slider Styling */
 .slider-group-compact {
-    padding: 10px;
+    padding: 8px 12px;
     background: #f8f9fa;
     border-radius: 6px;
     border: 1px solid #e9ecef;
+    height: fit-content;
 }
 
 .slider-label-compact {
     font-weight: 600;
     color: #495057;
     margin-bottom: 0.25rem;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -697,9 +701,11 @@ h1 {
     font-weight: 700;
     color: #007bff;
     background: #e7f1ff;
-    padding: 1px 6px;
-    border-radius: 8px;
-    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    min-width: 28px;
+    text-align: center;
 }
 
 .form-range-compact {
@@ -1354,6 +1360,26 @@ h1 .text-primary {
         --surface: #2d2d2d;
         --text-primary: #ffffff;
         --text-secondary: #b3b3b3;
+    }
+}
+
+/* Responsive adjustments for form layout */
+@media (max-width: 768px) {
+    .slider-group-compact {
+        margin-bottom: 15px;
+    }
+    
+    .form-check-compact {
+        min-height: 50px;
+        padding: 6px 10px;
+    }
+    
+    .form-check-label-compact strong {
+        font-size: 0.8rem;
+    }
+    
+    .form-check-label-compact small {
+        font-size: 0.65rem;
     }
 }
 
