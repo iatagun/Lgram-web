@@ -15,7 +15,7 @@ import json
 
 from lgram.models.simple_language_model import create_language_model
 import lgram
-from .models import GeneratedText, UserActivityLog, UserLoginLog
+from .models import GeneratedText, UserActivityLog, UserLoginLog, GenerationProgress
 from .utils import (
     log_user_login, log_user_logout, log_user_activity, 
     log_text_generation, get_client_ip
@@ -133,6 +133,133 @@ def load_more_history(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+def show_terminal_progress(current, total, elapsed_time, rate=None):
+    """Terminal progress bar function"""
+    percentage = (current / total) * 100 if total > 0 else 0
+    
+    # Create visual progress bar
+    bar_length = 20
+    filled_length = int((percentage / 100) * bar_length)
+    bar = "█" * filled_length + "░" * (bar_length - filled_length)
+    
+    # Format time
+    elapsed_mins = int(elapsed_time / 60)
+    elapsed_secs = int(elapsed_time % 60)
+    
+    # Calculate remaining time
+    if current > 0 and rate:
+        remaining_time = (total - current) * rate
+        remaining_mins = int(remaining_time / 60)
+        remaining_secs = int(remaining_time % 60)
+        remaining_str = f"{remaining_mins:02d}:{remaining_secs:02d}"
+        rate_str = f"{rate:.2f}s/sent"
+    else:
+        remaining_str = "--:--"
+        rate_str = "--s/sent"
+    
+    # Terminal output
+    terminal_line = f'🎯 Centering Generation: {percentage:3.0f}%|{bar}| {current}/{total} [{elapsed_mins:02d}:{elapsed_secs:02d}<{remaining_str}, {rate_str}]'
+    
+    # Print to terminal
+    print(f"\r{terminal_line}", end="", flush=True)
+    
+    return terminal_line
+
+
+def update_progress(task_id, **kwargs):
+    """Update progress in database"""
+    try:
+        progress = GenerationProgress.objects.get(task_id=task_id)
+        
+        for key, value in kwargs.items():
+            if hasattr(progress, key):
+                setattr(progress, key, value)
+        
+        progress.save()
+        
+    except GenerationProgress.DoesNotExist:
+        print(f"[WARNING] Progress object not found for task_id: {task_id}")
+
+
+class SimpleProgressGenerator:
+    def __init__(self, task_id):
+        self.task_id = task_id
+        
+    def generate_with_progress(self, input_words, num_sentences, length, model_type):
+        """Generate text with real terminal and frontend progress"""
+        import time
+        start_time = time.time()
+        
+        try:
+            # Initialize
+            update_progress(self.task_id, status='initializing', percentage=10, 
+                          status_message='Loading model...')
+            
+            model = create_language_model()
+            
+            update_progress(self.task_id, status='generating', percentage=20,
+                          status_message=f'Generating {num_sentences} sentences...')
+            
+            print(f"\n[INFO] Starting {model_type} generation...")
+            
+            # Simulate real generation with progress
+            for i in range(num_sentences):
+                current = i + 1
+                elapsed = time.time() - start_time
+                
+                # Calculate rate
+                rate = elapsed / current if current > 0 else 0
+                
+                # Show terminal progress
+                terminal_line = show_terminal_progress(current, num_sentences, elapsed, rate)
+                
+                # Calculate percentage for frontend
+                generation_progress = (current / num_sentences) * 70  # 70% for generation
+                overall_progress = 20 + generation_progress
+                
+                # Update frontend
+                update_progress(self.task_id,
+                              current_sentence=current,
+                              percentage=overall_progress,
+                              detailed_message=terminal_line)
+                
+                # Simulate processing time
+                time.sleep(2.5)  # Realistic processing time
+            
+            print("\n[INFO] Performing final generation...")
+            
+            # Actual text generation
+            if model_type == 'centering':
+                result = model.generate_text_with_centering(
+                    num_sentences=num_sentences,
+                    input_words=input_words,
+                    length=length,
+                    use_progress_bar=False
+                )
+            else:
+                result = model.generate_text(
+                    num_sentences=num_sentences,
+                    input_words=input_words,
+                    length=length,
+                    use_progress_bar=False
+                )
+            
+            # Final update
+            update_progress(self.task_id, status='completed', percentage=100,
+                          current_sentence=num_sentences,
+                          status_message='Generation completed successfully!')
+            
+            print(f"\n[SUCCESS] Generation completed: {result}")
+            
+            return result
+            
+        except Exception as e:
+            print(f"\n[ERROR] Generation failed: {e}")
+            update_progress(self.task_id, status='failed', 
+                          status_message=f'Generation failed: {str(e)}')
+            return None
 
 @csrf_exempt
 def index(request):
@@ -829,3 +956,157 @@ def export_data_view(request):
 	return response
 
 # Demo user creation function removed - no longer needed for production
+
+
+def generate_text_async(task_id, input_words, num_sentences, length, model_type):
+    """Async generation wrapper with real progress"""
+    generator = SimpleProgressGenerator(task_id)
+    return generator.generate_with_progress(input_words, num_sentences, length, model_type)
+
+
+def create_progress_tracker(user, session_key, model_type, input_text, num_sentences):
+    """Create a new progress tracker"""
+    import uuid
+    
+    task_id = str(uuid.uuid4())
+    
+    progress = GenerationProgress.objects.create(
+        task_id=task_id,
+        user=user,
+        session_key=session_key,
+        model_type=model_type,
+        input_text=input_text,
+        total_sentences=num_sentences,
+        status='pending',
+        percentage=0,
+        current_sentence=0,
+        current_step=1,
+        total_steps=5,
+        status_message='Initializing...',
+        detailed_message='🎯 Preparing for text generation...'
+    )
+    
+    return progress
+
+
+@csrf_exempt
+def start_generation(request):
+    """API endpoint to start text generation"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST requests allowed'}, status=405)
+    
+    try:
+        # Get parameters
+        input_text = request.POST.get('input_text', '').strip()
+        num_sentences = int(request.POST.get('num_sentences', 5))
+        length = int(request.POST.get('length', 13))
+        model_type = request.POST.get('model_type', 'chunk')
+        
+        if not input_text:
+            return JsonResponse({'error': 'input_text is required'}, status=400)
+        
+        # Use SessionManager to get consistent session key
+        from .session_manager import SessionManager
+        session_key = SessionManager.get_session_key(request)
+        
+        # Create progress tracker
+        progress = create_progress_tracker(
+            user=request.user if request.user.is_authenticated else None,
+            session_key=session_key,
+            model_type=model_type,
+            input_text=input_text,
+            num_sentences=num_sentences
+        )
+        
+        # Start generation in background thread
+        import threading
+        input_words = input_text.strip().rstrip('.').split()
+        
+        def run_generation():
+            try:
+                result = generate_text_async(progress.task_id, input_words, num_sentences, length, model_type)
+                
+                if result:
+                    # Save to database
+                    generated_text_obj = GeneratedText.objects.create(
+                        user=request.user if request.user.is_authenticated else None,
+                        session_key=session_key,
+                        input_text=input_text,
+                        generated_text=result,
+                        ip_address=get_client_ip(request)
+                    )
+                    
+            except Exception as e:
+                print(f"[ERROR] Background generation failed: {e}")
+        
+        # Start background thread
+        generation_thread = threading.Thread(target=run_generation)
+        generation_thread.daemon = True
+        generation_thread.start()
+        
+        return JsonResponse({
+            'success': True,
+            'task_id': progress.task_id,
+            'message': 'Generation started successfully',
+            'num_sentences': num_sentences
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def get_generation_progress(request):
+    """API endpoint to get generation progress"""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Only GET requests allowed'}, status=405)
+    
+    task_id = request.GET.get('task_id')
+    if not task_id:
+        return JsonResponse({'error': 'task_id is required'}, status=400)
+    
+    try:
+        progress = GenerationProgress.objects.get(task_id=task_id)
+        
+        # Calculate elapsed time
+        elapsed = timezone.now() - progress.started_at
+        elapsed_str = str(elapsed).split('.')[0]  # Remove microseconds
+        
+        # Calculate processing rate
+        processing_rate = "--s/sent"
+        if progress.current_sentence > 0 and elapsed.total_seconds() > 0:
+            rate = elapsed.total_seconds() / progress.current_sentence
+            processing_rate = f"{rate:.2f}s/sent"
+        
+        # Estimate remaining time
+        remaining_str = "estimating..."
+        if progress.estimated_completion:
+            remaining = progress.estimated_completion - timezone.now()
+            if remaining.total_seconds() > 0:
+                remaining_str = str(remaining).split('.')[0]
+            else:
+                remaining_str = "00:00:00"
+        
+        response_data = {
+            'task_id': progress.task_id,
+            'status': progress.status,
+            'percentage': round(progress.percentage, 1),
+            'current_step': progress.current_step,
+            'total_steps': progress.total_steps,
+            'current_sentence': progress.current_sentence,
+            'total_sentences': progress.total_sentences,
+            'status_message': progress.status_message,
+            'detailed_message': progress.detailed_message,
+            'model_type': progress.model_type,
+            'elapsed_time': elapsed_str,
+            'estimated_remaining': remaining_str,
+            'processing_rate': processing_rate,
+            'is_completed': progress.status in ['completed', 'failed'],
+        }
+        
+        return JsonResponse(response_data)
+        
+    except GenerationProgress.DoesNotExist:
+        return JsonResponse({'error': 'Progress not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

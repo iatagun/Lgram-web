@@ -82,3 +82,56 @@ class GeneratedText(models.Model):
     def __str__(self):
         user_info = self.user.username if self.user else f"Session: {self.session_key[:8]}..."
         return f"{user_info} - {self.input_text[:30]}... -> {self.generated_text[:30]}..."
+
+
+class GenerationProgress(models.Model):
+    """Text generation progress tracking"""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+    
+    task_id = models.CharField(max_length=100, unique=True, db_index=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='generation_progress', null=True, blank=True)
+    session_key = models.CharField(max_length=40, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    percentage = models.FloatField(default=0.0)
+    current_sentence = models.IntegerField(default=0)
+    total_sentences = models.IntegerField(default=0)
+    start_time = models.DateTimeField(default=timezone.now)
+    end_time = models.DateTimeField(null=True, blank=True)
+    message = models.TextField(blank=True)
+    error_message = models.TextField(blank=True)
+    generated_text = models.ForeignKey(GeneratedText, on_delete=models.CASCADE, related_name='progress_logs', null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-start_time']
+        verbose_name = 'Generation Progress'
+        verbose_name_plural = 'Generation Progress'
+        indexes = [
+            models.Index(fields=['task_id']),
+            models.Index(fields=['user', '-start_time']),
+            models.Index(fields=['session_key', '-start_time']),
+            models.Index(fields=['status', '-start_time']),
+        ]
+    
+    def __str__(self):
+        user_info = self.user.username if self.user else f"Session: {self.session_key[:8]}..."
+        return f"{user_info} - {self.task_id} - {self.get_status_display()} - {self.percentage:.1f}%"
+    
+    @property
+    def elapsed_time(self):
+        """Get elapsed time in seconds"""
+        end = self.end_time if self.end_time else timezone.now()
+        return (end - self.start_time).total_seconds()
+    
+    @property
+    def estimated_remaining_time(self):
+        """Estimate remaining time based on current progress"""
+        if self.percentage <= 0:
+            return None
+        elapsed = self.elapsed_time
+        estimated_total = elapsed / (self.percentage / 100)
+        return max(0, estimated_total - elapsed)
