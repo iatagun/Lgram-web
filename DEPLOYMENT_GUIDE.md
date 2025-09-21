@@ -29,7 +29,18 @@ cd Lgram-web
 - PythonAnywhere Dashboard → Files
 - Proje dosyalarını `/home/yourusername/Lgram-web/` klasörüne yükleyin
 
-### Adım 2: Virtual Environment Oluşturun
+### Adım 2: Otomatik Kurulum (Önerilen)
+
+```bash
+# PythonAnywhere Bash Console'da
+cd ~
+git clone https://github.com/iatagun/Lgram-web.git
+cd Lgram-web
+chmod +x setup_pythonanywhere.sh
+./setup_pythonanywhere.sh
+```
+
+### Adım 2 Alternatif: Manuel Kurulum
 
 ```bash
 # PythonAnywhere Bash Console'da
@@ -37,15 +48,19 @@ cd ~
 python3.11 -m venv lgram-venv
 source lgram-venv/bin/activate
 cd Lgram-web
-pip install -r requirements.txt
+
+# Disk kotası için cache kullanma
+pip install --no-cache-dir -r requirements.txt
 ```
 
 ### Adım 3: SpaCy Model İndirin
 
 ```bash
-# Virtual environment aktifken
+# Virtual environment aktifken - küçük model kullanıyoruz (disk kotası için)
 python -m spacy download en_core_web_sm
 ```
+
+**Not:** PythonAnywhere'deki disk kotası sınırlamaları nedeniyle küçük `en_core_web_sm` modelini kullanıyoruz. Bu model 400MB yerine sadece ~15MB yer kaplar.
 
 ### Adım 4: Django Ayarları
 
@@ -131,20 +146,41 @@ ALLOWED_HOSTS = [
 
 ### Yaygın Sorunlar
 
-1. **ALLOWED_HOSTS hatası**
+1. **Disk quota exceeded (Disk kotası aşıldı)**
+   ```bash
+   # Büyük paketleri temizle
+   pip cache purge
+   
+   # Sadece gerekli küçük modeli yükle
+   python -m spacy download en_core_web_sm
+   
+   # Büyük modelleri kaldır
+   pip uninstall en_core_web_lg -y
+   ```
+
+2. **ALLOWED_HOSTS hatası**
    - `settings.py`'de domain'inizi eklediğinizden emin olun
 
-2. **Static files görünmüyor**
+3. **Static files görünmüyor**
    - `python manage.py collectstatic` çalıştırın
    - Static files yolunu kontrol edin
 
-3. **Import errors**
+4. **Import errors**
    - Virtual environment'ın doğru kurulduğunu kontrol edin
    - Requirements.txt'deki paketlerin kurulu olduğunu kontrol edin
 
-4. **Database errors**
+5. **Database errors**
    - Migrations'ları çalıştırdığınızdan emin olun
    - Database dosyasının yazma izinlerini kontrol edin
+
+6. **SpaCy model bulunamadı**
+   ```bash
+   # Model indir
+   python -m spacy download en_core_web_sm
+   
+   # Model linkle
+   python -m spacy link en_core_web_sm en
+   ```
 
 ### Güncelleme Yapmak
 
