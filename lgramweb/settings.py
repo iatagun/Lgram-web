@@ -20,12 +20,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-9&$(z1%v%37jsvzpnw$pyo%-%-r6cj#+73_+#87*%aqlb3s+cm'
+# For production, use environment variable or generate a new secret key
+import os
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-9&$(z1%v%37jsvzpnw$pyo%-%-r6cj#+73_+#87*%aqlb3s+cm')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+# Add your PythonAnywhere domain here
+ALLOWED_HOSTS = [
+    'localhost', 
+    '127.0.0.1',
+    'yourusername.pythonanywhere.com',  # Replace with your actual PythonAnywhere domain
+]
 
 
 # Application definition
@@ -131,10 +138,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "main" / "static",
 ]
+
+# Static files root for production (PythonAnywhere)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -149,7 +159,7 @@ LOGOUT_REDIRECT_URL = '/login/'
 # Session settings
 SESSION_COOKIE_AGE = 86400 * 30  # 30 days
 SESSION_SAVE_EVERY_REQUEST = True
-SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SECURE = not DEBUG  # True in production with HTTPS
 SESSION_COOKIE_HTTPONLY = True  # Prevent XSS attacks
 SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
@@ -158,3 +168,12 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Store in database
 # Session cleanup settings
 SESSION_COOKIE_NAME = 'lgram_sessionid'
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
+
+# Security settings for production
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
