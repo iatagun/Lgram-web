@@ -25,14 +25,19 @@ import os
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-9&$(z1%v%37jsvzpnw$pyo%-%-r6cj#+73_+#87*%aqlb3s+cm')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() == 'true'
 
-# Add your PythonAnywhere domain here
+# Railway deployment - dynamic ALLOWED_HOSTS
+RAILWAY_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
 ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1',
-    'yourusername.pythonanywhere.com',  # Replace with your actual PythonAnywhere domain
+    '.railway.app',  # Railway wildcard domain
 ]
+
+# Add Railway domain if available
+if RAILWAY_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_DOMAIN)
 
 
 # Application definition
@@ -49,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Railway static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',  # Add language detection
     'django.middleware.common.CommonMiddleware',
@@ -84,12 +90,22 @@ WSGI_APPLICATION = 'lgramweb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Railway PostgreSQL configuration
+import dj_database_url
+
+if os.environ.get('DATABASE_URL'):
+    # Railway PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
     }
-}
+else:
+    # Local SQLite for development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -143,8 +159,11 @@ STATICFILES_DIRS = [
     BASE_DIR / "main" / "static",
 ]
 
-# Static files root for production (PythonAnywhere)
+# Static files root for production (Railway + WhiteNoise)
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise configuration for Railway
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
