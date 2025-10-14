@@ -11,7 +11,7 @@ tzdata==2025.2
 django-bootstrap5==25.1
 
 # Text Processing (minimal)
-centering-lgram==1.2.1
+centering-lgram==1.2.2
 spacy==3.8.7
 numpy<2.1
 
