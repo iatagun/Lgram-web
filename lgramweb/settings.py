@@ -27,17 +27,27 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-9&$(z1%v%37jsv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() == 'true'
 
-# Railway deployment - dynamic ALLOWED_HOSTS
+# Dynamic ALLOWED_HOSTS for different platforms
 RAILWAY_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
+PYTHONANYWHERE_DOMAIN = os.environ.get('PYTHONANYWHERE_DOMAIN')
+
 ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1',
     '.railway.app',  # Railway wildcard domain
+    '.pythonanywhere.com',  # PythonAnywhere wildcard domain
 ]
 
-# Add Railway domain if available
+# Add platform-specific domains if available
 if RAILWAY_DOMAIN:
     ALLOWED_HOSTS.append(RAILWAY_DOMAIN)
+if PYTHONANYWHERE_DOMAIN:
+    ALLOWED_HOSTS.append(PYTHONANYWHERE_DOMAIN)
+
+# Add common PythonAnywhere pattern
+ALLOWED_HOSTS.extend([
+    'yourusername.pythonanywhere.com',  # Replace with your username
+])
 
 
 # Application definition
@@ -90,16 +100,24 @@ WSGI_APPLICATION = 'lgramweb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Railway PostgreSQL configuration
-import dj_database_url
-
+# Multi-platform database configuration
 if os.environ.get('DATABASE_URL'):
-    # Railway PostgreSQL
-    DATABASES = {
-        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
-    }
+    # Railway PostgreSQL (requires dj-database-url)
+    try:
+        import dj_database_url
+        DATABASES = {
+            'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
+        }
+    except ImportError:
+        # Fallback to SQLite if dj-database-url not available
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 else:
-    # Local SQLite for development
+    # Default SQLite for development and PythonAnywhere
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

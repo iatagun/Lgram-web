@@ -9,9 +9,10 @@ Bu rehber, Django projenizi PythonAnywhere'e deploy etmek için gereken adımlar
 - Beginner (ücretsiz) veya ücretli hesap seçin
 
 ### 2. Proje Dosyaları Hazırlığı
-✅ `requirements.txt` - Gerekli Python paketleri
-✅ `lgramweb/settings.py` - Production ayarları
+✅ `requirements_pythonanywhere.txt` - Optimize edilmiş paketler (minimal disk kullanımı)
+✅ `pythonanywhere_settings.py` - PythonAnywhere özel ayarları
 ✅ `wsgi_pythonanywhere.py` - WSGI yapılandırması
+✅ `setup_pythonanywhere.sh` - Otomatik kurulum scripti
 
 ## PythonAnywhere'e Deploy Adımları
 
@@ -29,7 +30,7 @@ cd Lgram-web
 - PythonAnywhere Dashboard → Files
 - Proje dosyalarını `/home/yourusername/Lgram-web/` klasörüne yükleyin
 
-### Adım 2: Otomatik Kurulum (Önerilen)
+### Adım 2: Otomatik Kurulum (Önerilen - Disk Kotası Optimizeli)
 
 ```bash
 # PythonAnywhere Bash Console'da
@@ -40,17 +41,21 @@ chmod +x setup_pythonanywhere.sh
 ./setup_pythonanywhere.sh
 ```
 
+**⚠️ Disk Kotası Uyarısı:** Bu script minimal paket kurulumu yapar (~50MB vs ~500MB)
+
 ### Adım 2 Alternatif: Manuel Kurulum
 
 ```bash
-# PythonAnywhere Bash Console'da
+# PythonAnywhere Bash Console'da (SADECE acil durumda)
 cd ~
-python3.11 -m venv lgram-venv
-source lgram-venv/bin/activate
+mkvirtualenv --python=python3.10 lgram-venv
 cd Lgram-web
 
-# Disk kotası için cache kullanma
-pip install --no-cache-dir -r requirements.txt
+# Sadece gerekli paketleri kur
+pip install --no-cache-dir -r requirements_pythonanywhere.txt
+
+# Küçük SpaCy modelini indir
+python -m spacy download en_core_web_sm
 ```
 
 ### Adım 3: SpaCy Model İndirin
