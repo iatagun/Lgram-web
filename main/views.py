@@ -25,15 +25,20 @@ from .session_manager import SessionManager
 def get_lgram_version():
     """Get lgram package version"""
     try:
-        # First try pkg_resources as it's more reliable for installed packages
-        import pkg_resources
-        return pkg_resources.get_distribution('centering-lgram').version
-    except:
+        # Use modern importlib.metadata (Python 3.8+)
+        from importlib.metadata import version
+        return version('centering-lgram')
+    except ImportError:
         try:
-            # Fallback to module __version__ attribute
-            return lgram.__version__
-        except AttributeError:
-            return "unknown"
+            # Fallback for older Python versions
+            import pkg_resources
+            return pkg_resources.get_distribution('centering-lgram').version
+        except:
+            try:
+                # Fallback to module __version__ attribute
+                return lgram.__version__
+            except AttributeError:
+                return "unknown"
 
 @csrf_exempt
 def switch_language(request):

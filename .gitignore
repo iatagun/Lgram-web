@@ -1,9 +1,13 @@
 # .gitignore for PythonAnywhere Deployment
 # Optimize project size for upload limits
 
-# Large data files (reduce project size)
+# Large data files (reduce project size for PythonAnywhere)
 
-*.txt
+!requirements*.txt
+!*.md
+!Procfile
+
+# Data directories
 data/
 datasets/
 
